@@ -213,6 +213,7 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
     <button class="tab" data-lvl="7"><span class="t-lvl">Toolkit</span><span class="t-name">Plots</span><span class="t-prog" data-prog="7">0/3</span></button>
     <button class="tab" data-lvl="8"><span class="t-lvl">Toolkit</span><span class="t-name">Model</span><span class="t-prog" data-prog="8">0/6</span></button>
     <button class="tab" data-lvl="9"><span class="t-lvl">Toolkit</span><span class="t-name">Day-of</span><span class="t-prog" data-prog="9">0/3</span></button>
+    <button class="tab" data-lvl="10"><span class="t-lvl">Toolkit</span><span class="t-name">Desk</span><span class="t-prog" data-prog="10">0/5</span></button>
   </nav>
 </header>
 
@@ -943,7 +944,7 @@ weather    : obs_time, city, rain_mm</pre>
   <div class="lvl-hero">
     <div class="eyebrow">Toolkit · Vocab &amp; concepts</div>
     <h2>The words, without the mystique</h2>
-    <p>Two layers here. First the <strong>vocab</strong> you'll meet in the exercises, plain English with a sports hook. Then the <strong>concepts</strong> a prediction-markets desk actually argues about — the ideas that make you sound like you've sat near one. Tap a card to flip; mark <em>know it</em> when it sticks.</p>
+    <p>Two layers here. First the <strong>vocab</strong> you'll meet in the exercises, plain English with a sports hook. Then the five <strong>concepts</strong> the modeling exercise actually touches — the trading-desk deep cuts now live in the Desk tab. Tap a card to flip; mark <em>know it</em> when it sticks.</p>
   </div>
 
   <div class="topic">
@@ -1030,106 +1031,16 @@ weather    : obs_time, city, rain_mm</pre>
 
   <hr class="hr">
   <div class="topic">
-    <div class="eyebrow">Concepts · Pricing &amp; probability</div>
-    <h3>What the desk argues about</h3>
-    <p>These aren't pandas — they're the modeling worldview of prediction markets. Sourced from practitioner writing, exchange docs, and the academic canon (Wolfers &amp; Zitzewitz).</p>
-    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg4">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg4"></span></div>
-    <div class="fc-grid" id="fcg4">
+    <div class="eyebrow">Concepts · For the modeling exercise</div>
+    <h3>The five that show up in the notebook</h3>
+    <p>Price-as-probability, plus the four ways to judge a probability model — these connect directly to the calibration plot (Plots #9) and the report block. The trading-desk deep cuts moved to the <strong>Desk</strong> tab; skim that only with spare capacity.</p>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg8">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg8"></span></div>
+    <div class="fc-grid" id="fcg8">
       <div class="fc" data-fcid="implied"><div class="fc-term">implied probability <span class="fc-know">know it</span></div><div class="fc-back">A binary contract pays $1 if the event happens, $0 if not — so its price <strong>is</strong> the market's probability: 73¢ ≈ 73%. Everything on the desk (edge, sizing, hedging) is denominated in probability units. <code class="ic">p = price / payout</code></div></div>
-      <div class="fc" data-fcid="vig"><div class="fc-term">overround / vig — and de-vigging <span class="fc-know">know it</span></div><div class="fc-back">Quoted probabilities across all outcomes sum to more than 100%; the excess is the bookmaker's margin. You must strip it (de-vig) before comparing your model to the market — else your "edge" is just their margin. <code class="ic">overround = Σp − 1</code>. Naive fix: divide by the sum. Sharp fix: the vig isn't spread evenly (see next card), so power/Shin methods exist.</div></div>
-      <div class="fc" data-fcid="flb"><div class="fc-term">favorite-longshot bias <span class="fc-know">know it</span></div><div class="fc-back">The best-documented betting anomaly: longshots are systematically overpriced, heavy favorites slightly underpriced — 100-1 shots win far less often than their price implies. It's both a trade and a de-vigging correction near the 0/1 extremes.</div></div>
-      <div class="fc" data-fcid="coherence"><div class="fc-term">coherence / Dutch book <span class="fc-know">know it</span></div><div class="fc-back">Related markets must obey probability axioms: exclusive-and-exhaustive outcomes sum to 1; "covers −7.5" can't cost more than "wins." Violations = a guaranteed-profit portfolio (Dutch book) — the cleanest edge in event markets, and a sanity check on your own model's outputs.</div></div>
-      <div class="fc" data-fcid="close"><div class="fc-term">the close = the benchmark <span class="fc-know">know it</span></div><div class="fc-back">Prices sharpen as information arrives; the closing line is the most efficient forecast available (sharp books' closes track outcomes almost perfectly). Your model is graded against the <em>de-vigged close</em>, not against raw results.</div></div>
-      <div class="fc" data-fcid="prior"><div class="fc-term">market as prior <span class="fc-know">know it</span></div><div class="fc-back">Sharp desks don't trade raw model output — they blend model with market price (the market knows injuries, weather, sharp flow your model doesn't) and trade only where the <em>blend</em> still disagrees. How much weight your model deserves is itself an empirical question.</div></div>
-      <div class="fc" data-fcid="crowds"><div class="fc-term">aggregation &amp; extremizing <span class="fc-know">know it</span></div><div class="fc-back">Averaging many independent forecasts beats nearly any individual — but simple averaging is systematically <em>underconfident</em> (each forecaster holds only part of the evidence), so pooled probabilities get pushed toward 0/1 ("extremized"). A desk is itself an aggregation engine: model + market + flow.</div></div>
-    </div>
-  </div>
-
-  <div class="topic">
-    <div class="eyebrow">Concepts · Judging a model</div>
-    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg5">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg5"></span></div>
-    <div class="fc-grid" id="fcg5">
       <div class="fc" data-fcid="calib"><div class="fc-term">calibration <span class="fc-know">know it</span></div><div class="fc-back">Of everything you called 70%, did ~70% happen? Checked by binning predictions and plotting predicted vs realized frequency. In a market that trades probabilities directly, miscalibration is <em>immediately monetized against you</em>.</div></div>
       <div class="fc" data-fcid="sharp"><div class="fc-term">sharpness vs calibration <span class="fc-know">know it</span></div><div class="fc-back">Always predicting the base rate is perfectly calibrated and perfectly useless. Sharpness = how far your forecasts sit from the base rate. The goal, verbatim: <strong>"maximize sharpness, subject to calibration."</strong> An interviewer favorite.</div></div>
       <div class="fc" data-fcid="brier"><div class="fc-term">Brier score <span class="fc-know">know it</span></div><div class="fc-back">Mean squared error between predicted probability and the 0/1 outcome; lower is better; coin-flipping 50/50 events scores 0.25. A "proper" scoring rule — you can't game it by hedging toward 50%. <code class="ic">mean((p − outcome)²)</code></div></div>
       <div class="fc" data-fcid="logloss"><div class="fc-term">log loss <span class="fc-know">know it</span></div><div class="fc-back">−mean(log p assigned to what happened). Punishes confident wrongness brutally (1% on a thing that happens costs 4.6; 0% costs ∞). The elegant link: log loss is proportional to a Kelly bettor's compound growth rate — the best log-loss model literally compounds money fastest.</div></div>
-      <div class="fc" data-fcid="clv"><div class="fc-term">closing line value (CLV) <span class="fc-know">know it</span></div><div class="fc-back">Did you consistently get better prices than the de-vigged close? Bet outcomes are ~pure noise over any human-sized sample; CLV converges hundreds of times faster. Desks will keep a losing strategy that beats the close and kill a winning one that doesn't. <strong>The</strong> industry proof-of-skill.</div></div>
-    </div>
-  </div>
-
-  <div class="topic">
-    <div class="eyebrow">Concepts · Sizing &amp; risk</div>
-    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg6">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg6"></span></div>
-    <div class="fc-grid" id="fcg6">
-      <div class="fc" data-fcid="ev"><div class="fc-term">EV / edge <span class="fc-know">know it</span></div><div class="fc-back">In event contracts, edge is beautifully simple: buy at price c with true probability p → <code class="ic">EV = p − c</code> per contract. The whole job compresses to "estimate p better than the market, net of fees and adverse selection."</div></div>
-      <div class="fc" data-fcid="kelly"><div class="fc-term">Kelly criterion <span class="fc-know">know it</span></div><div class="fc-back">The bankroll fraction that maximizes long-run compound growth: <code class="ic">f* = edge/odds</code>; for a contract at price c, <code class="ic">f* = (p − c)/(1 − c)</code>. Betting MORE than Kelly is strictly worse — more variance AND less growth. Size ∝ edge, inversely ∝ variance.</div></div>
-      <div class="fc" data-fcid="frackelly"><div class="fc-term">fractional Kelly <span class="fc-know">know it</span></div><div class="fc-back">Serious bettors stake ¼–½ of full Kelly. Why: your p is an <em>estimate</em>, and Kelly punishes overestimated edge asymmetrically. Growth scales ~linearly with the fraction, variance with its square — half-Kelly keeps ~75% of the growth at ~25% of the variance.</div></div>
-      <div class="fc" data-fcid="correl"><div class="fc-term">correlated exposure <span class="fc-know">know it</span></div><div class="fc-back">Kelly assumes independent sequential bets; a real book holds spread + moneyline + total on the same game at once. Correlated positions stack, not diversify — one referee call resolves twenty positions. Portfolio-level sizing shrinks as correlation rises.</div></div>
-      <div class="fc" data-fcid="sharpe"><div class="fc-term">sharp vs Sharpe <span class="fc-know">know it</span></div><div class="fc-back">A <em>sharp</em> is a skilled bettor whose flow predicts price moves. The <em>Sharpe ratio</em> is risk-adjusted return: <code class="ic">mean(returns)/std(returns)</code> — reward per unit of bumpiness. You want to be one and have the other.</div></div>
-      <div class="fc" data-fcid="resolution"><div class="fc-term">resolution / settlement risk <span class="fc-know">know it</span></div><div class="fc-back">You're not trading the event — you're trading the <strong>resolution rule</strong>: source agency, wording, edge cases. Venues have settled the "same" event in opposite directions. Cross-venue "arbitrage" that ignores wording differences is short semantic risk, not riskless.</div></div>
-    </div>
-  </div>
-
-  <div class="topic">
-    <div class="eyebrow">Concepts · Market making &amp; flow</div>
-    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg7">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg7"></span></div>
-    <div class="fc-grid" id="fcg7">
-      <div class="fc" data-fcid="advsel"><div class="fc-term">adverse selection <span class="fc-know">know it</span></div><div class="fc-back">Whoever chooses to hit your quote is disproportionately likely to know something you don't — your fills are biased toward your mistakes. A resting quote is a <strong>free option you've written to informed traders</strong>. THE central risk of quoting event markets, where information is lumpy (injury news, lineup leaks).</div></div>
-      <div class="fc" data-fcid="inventory"><div class="fc-term">inventory risk &amp; skew <span class="fc-know">know it</span></div><div class="fc-back">Fills accumulate a one-sided position you often can't hedge (there's no instrument for "Chiefs win" except correlated markets). So you skew both quotes to attract flattening flow: long YES → lower your bid AND your ask. Price skew IS the risk management.</div></div>
-      <div class="fc" data-fcid="spreadset"><div class="fc-term">spread setting in thin markets <span class="fc-know">know it</span></div><div class="fc-back">The spread = compensation for adverse selection + inventory risk + fees. It must widen when books are thin, when informed flow is likely, and near the extremes where one play flips 50¢ to 95¢. Too tight = donating to the informed; too wide = earning nothing.</div></div>
-      <div class="fc" data-fcid="steam"><div class="fc-term">flow toxicity &amp; steam <span class="fc-know">know it</span></div><div class="fc-back">Recreational flow is noise you're paid to serve; sharp flow predicts moves. "Steam" = a coordinated sharp move hitting every venue in seconds — laggards get picked off at stale prices. Desks classify flow (size, timing, the CLV of its fills) to decide whom to widen against.</div></div>
-    </div>
-    <div class="note"><strong>What interviewers listen for</strong> (from practitioner sources + how prediction-markets desks publicly describe the work): the four concepts that most separate a sharp candidate are <strong>CLV over P&amp;L</strong> (you understand variance and sample size in binary outcomes), <strong>de-vigging done right</strong> (compare to the no-vig close; proportional de-vig is wrong because of favorite-longshot bias), <strong>fractional-Kelly reasoning</strong> (not the formula — the <em>why</em>: noisy edge estimates make full Kelly over-betting), and <strong>adverse-selection framing</strong> (a quote is an option you've written; spread/size/skew are the response). Bonus: tie evaluation to sizing — "log loss is a Kelly bettor's growth rate."</div>
-  </div>
-
-  <div class="topic">
-    <div class="eyebrow">Check the concepts</div>
-    <div class="quiz" data-qid="q6-4">
-      <div class="q-tag">Concept quiz</div>
-      <p class="q-text">Your model's bets LOST money over 200 games — but consistently beat the de-vigged closing line. A sharp desk concludes…</p>
-      <div class="q-opts">
-        <button class="q-opt">The model is broken; 200 games of losses is the market telling you so</button>
-        <button class="q-opt">Results are what counts — scale it down but keep tinkering</button>
-        <button class="q-opt" data-ok>Probably keep it: 200 binary outcomes is nearly pure noise, while beating the close is fast-converging evidence of real information</button>
-      </div>
-      <p class="q-expl">CLV converges orders of magnitude faster than P&amp;L. Desks bless losing strategies that beat the close and kill winning ones that don't. Reaching for CLV instead of the win-loss record is the single sharpest signal you can send.</p>
-    </div>
-    <div class="quiz" data-qid="q6-5">
-      <div class="q-tag">Concept quiz</div>
-      <p class="q-text">Quoted probabilities on a market sum to 104%. You divide each by 1.04 and call it fair. What's the flaw?</p>
-      <div class="q-opts">
-        <button class="q-opt" data-ok>The vig isn't spread evenly — longshots carry more of it (favorite-longshot bias), so proportional de-vigging misprices the extremes; power or Shin methods correct for this</button>
-        <button class="q-opt">Nothing — dividing by the sum is exact</button>
-        <button class="q-opt">You should subtract 4% from each outcome instead</button>
-      </div>
-      <p class="q-expl">Books load margin onto longshots because bettors overpay for them. Naive proportional de-vig therefore leaves you systematically wrong exactly where prices are most distorted — near 0 and 1.</p>
-    </div>
-    <div class="quiz" data-qid="q6-6">
-      <div class="q-tag">Concept quiz</div>
-      <p class="q-text">Why do serious bettors stake HALF of what the Kelly formula says?</p>
-      <div class="q-opts">
-        <button class="q-opt">Regulation caps stake sizes on most venues</button>
-        <button class="q-opt" data-ok>Because p is an estimate: over-betting from overestimated edge cuts growth AND adds variance — half-Kelly keeps ~75% of growth at ~25% of the variance</button>
-        <button class="q-opt">Superstition — full Kelly is mathematically optimal and fractions just feel safer</button>
-      </div>
-      <p class="q-expl">Kelly is optimal only if your probability is exactly right. With a noisy model, nominal full-Kelly is effectively beyond true Kelly — strictly dominated. Growth ≈ linear in the fraction, variance ≈ quadratic: the trade is asymmetric in your favor.</p>
-    </div>
-    <div class="quiz" data-qid="q6-7">
-      <div class="q-tag">Concept quiz</div>
-      <p class="q-text">A resting quote in an event market is best thought of as…</p>
-      <div class="q-opts">
-        <button class="q-opt">A small fee you charge for providing a service</button>
-        <button class="q-opt">A lottery ticket — random flow hits it</button>
-        <button class="q-opt" data-ok>A free option you've written to anyone better informed — which is why you widen, shrink, skew, or pull it when informed flow is likely</button>
-      </div>
-      <p class="q-expl">Adverse selection: the people who choose to trade with you know things (injury, lineup, weather). Framing spread/size/skew as the <em>response</em> to that is what separates a market-making mindset from a pure modeling one.</p>
-    </div>
-
-    <div class="ex" data-exid="ex6-2" data-extitle="V2 Say it like the desk">
-      <div class="ex-head"><span class="ex-tag">Exercise V2</span><span class="ex-title">Say it like the desk</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
-      <p class="ex-prompt">Three answers, 2–3 sentences each, in your own words (these are interview answers, not code): (a) "Your model lost money last month — why do you still trust it?" (b) "Why not bet full Kelly?" (c) "You're quoting a tennis match and a sharp account keeps hitting your ask — what do you do and why?"</p>
-      <textarea class="ex-code" placeholder="(a) ...&#10;&#10;(b) ...&#10;&#10;(c) ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) CLV: outcomes are noise at this sample size; I beat the de-vigged close. (b) noisy edge estimate → full Kelly over-bets → less growth, more variance. (c) adverse selection: widen/shrink/skew or pull; their fills predict moves — reprice toward their side.</div></details>
     </div>
   </div>
 
@@ -1472,6 +1383,111 @@ print(f"MODEL     MAE {scores.mean():.4f} vs persistence {persist_mae:.4f}"
   </div>
 </section>
 
+<!-- ═══════════════════ TOOLKIT · DESK ═══════════════════ -->
+<section class="level" id="lvl10" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Toolkit · The desk</div>
+    <h2>Trading-desk concepts — seasoning, not syllabus</h2>
+    <p>None of this is required for the notebook exercise. It is the worldview of a prediction-markets desk: read it once for conversational range, keep the four differentiators if they stick, and do not let it crowd out pandas reps. Short on time? Skip this tab with a clear conscience.</p>
+  </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Concepts · Pricing &amp; probability</div>
+    <h3>What the desk argues about</h3>
+    <p>These aren't pandas — they're the modeling worldview of prediction markets. Sourced from practitioner writing, exchange docs, and the academic canon (Wolfers &amp; Zitzewitz).</p>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg4">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg4"></span></div>
+    <div class="fc-grid" id="fcg4">
+      <div class="fc" data-fcid="vig"><div class="fc-term">overround / vig — and de-vigging <span class="fc-know">know it</span></div><div class="fc-back">Quoted probabilities across all outcomes sum to more than 100%; the excess is the bookmaker's margin. You must strip it (de-vig) before comparing your model to the market — else your "edge" is just their margin. <code class="ic">overround = Σp − 1</code>. Naive fix: divide by the sum. Sharp fix: the vig isn't spread evenly (see next card), so power/Shin methods exist.</div></div>
+      <div class="fc" data-fcid="flb"><div class="fc-term">favorite-longshot bias <span class="fc-know">know it</span></div><div class="fc-back">The best-documented betting anomaly: longshots are systematically overpriced, heavy favorites slightly underpriced — 100-1 shots win far less often than their price implies. It's both a trade and a de-vigging correction near the 0/1 extremes.</div></div>
+      <div class="fc" data-fcid="coherence"><div class="fc-term">coherence / Dutch book <span class="fc-know">know it</span></div><div class="fc-back">Related markets must obey probability axioms: exclusive-and-exhaustive outcomes sum to 1; "covers −7.5" can't cost more than "wins." Violations = a guaranteed-profit portfolio (Dutch book) — the cleanest edge in event markets, and a sanity check on your own model's outputs.</div></div>
+      <div class="fc" data-fcid="close"><div class="fc-term">the close = the benchmark <span class="fc-know">know it</span></div><div class="fc-back">Prices sharpen as information arrives; the closing line is the most efficient forecast available (sharp books' closes track outcomes almost perfectly). Your model is graded against the <em>de-vigged close</em>, not against raw results.</div></div>
+      <div class="fc" data-fcid="prior"><div class="fc-term">market as prior <span class="fc-know">know it</span></div><div class="fc-back">Sharp desks don't trade raw model output — they blend model with market price (the market knows injuries, weather, sharp flow your model doesn't) and trade only where the <em>blend</em> still disagrees. How much weight your model deserves is itself an empirical question.</div></div>
+      <div class="fc" data-fcid="crowds"><div class="fc-term">aggregation &amp; extremizing <span class="fc-know">know it</span></div><div class="fc-back">Averaging many independent forecasts beats nearly any individual — but simple averaging is systematically <em>underconfident</em> (each forecaster holds only part of the evidence), so pooled probabilities get pushed toward 0/1 ("extremized"). A desk is itself an aggregation engine: model + market + flow.</div></div>
+      <div class="fc" data-fcid="clv"><div class="fc-term">closing line value (CLV) <span class="fc-know">know it</span></div><div class="fc-back">Did you consistently get better prices than the de-vigged close? Bet outcomes are ~pure noise over any human-sized sample; CLV converges hundreds of times faster. Desks will keep a losing strategy that beats the close and kill a winning one that doesn't. <strong>The</strong> industry proof-of-skill.</div></div>
+    </div>
+  </div>
+
+
+  <div class="topic">
+    <div class="eyebrow">Concepts · Sizing &amp; risk</div>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg6">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg6"></span></div>
+    <div class="fc-grid" id="fcg6">
+      <div class="fc" data-fcid="ev"><div class="fc-term">EV / edge <span class="fc-know">know it</span></div><div class="fc-back">In event contracts, edge is beautifully simple: buy at price c with true probability p → <code class="ic">EV = p − c</code> per contract. The whole job compresses to "estimate p better than the market, net of fees and adverse selection."</div></div>
+      <div class="fc" data-fcid="kelly"><div class="fc-term">Kelly criterion <span class="fc-know">know it</span></div><div class="fc-back">The bankroll fraction that maximizes long-run compound growth: <code class="ic">f* = edge/odds</code>; for a contract at price c, <code class="ic">f* = (p − c)/(1 − c)</code>. Betting MORE than Kelly is strictly worse — more variance AND less growth. Size ∝ edge, inversely ∝ variance.</div></div>
+      <div class="fc" data-fcid="frackelly"><div class="fc-term">fractional Kelly <span class="fc-know">know it</span></div><div class="fc-back">Serious bettors stake ¼–½ of full Kelly. Why: your p is an <em>estimate</em>, and Kelly punishes overestimated edge asymmetrically. Growth scales ~linearly with the fraction, variance with its square — half-Kelly keeps ~75% of the growth at ~25% of the variance.</div></div>
+      <div class="fc" data-fcid="correl"><div class="fc-term">correlated exposure <span class="fc-know">know it</span></div><div class="fc-back">Kelly assumes independent sequential bets; a real book holds spread + moneyline + total on the same game at once. Correlated positions stack, not diversify — one referee call resolves twenty positions. Portfolio-level sizing shrinks as correlation rises.</div></div>
+      <div class="fc" data-fcid="sharpe"><div class="fc-term">sharp vs Sharpe <span class="fc-know">know it</span></div><div class="fc-back">A <em>sharp</em> is a skilled bettor whose flow predicts price moves. The <em>Sharpe ratio</em> is risk-adjusted return: <code class="ic">mean(returns)/std(returns)</code> — reward per unit of bumpiness. You want to be one and have the other.</div></div>
+      <div class="fc" data-fcid="resolution"><div class="fc-term">resolution / settlement risk <span class="fc-know">know it</span></div><div class="fc-back">You're not trading the event — you're trading the <strong>resolution rule</strong>: source agency, wording, edge cases. Venues have settled the "same" event in opposite directions. Cross-venue "arbitrage" that ignores wording differences is short semantic risk, not riskless.</div></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Concepts · Market making &amp; flow</div>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg7">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg7"></span></div>
+    <div class="fc-grid" id="fcg7">
+      <div class="fc" data-fcid="advsel"><div class="fc-term">adverse selection <span class="fc-know">know it</span></div><div class="fc-back">Whoever chooses to hit your quote is disproportionately likely to know something you don't — your fills are biased toward your mistakes. A resting quote is a <strong>free option you've written to informed traders</strong>. THE central risk of quoting event markets, where information is lumpy (injury news, lineup leaks).</div></div>
+      <div class="fc" data-fcid="inventory"><div class="fc-term">inventory risk &amp; skew <span class="fc-know">know it</span></div><div class="fc-back">Fills accumulate a one-sided position you often can't hedge (there's no instrument for "Chiefs win" except correlated markets). So you skew both quotes to attract flattening flow: long YES → lower your bid AND your ask. Price skew IS the risk management.</div></div>
+      <div class="fc" data-fcid="spreadset"><div class="fc-term">spread setting in thin markets <span class="fc-know">know it</span></div><div class="fc-back">The spread = compensation for adverse selection + inventory risk + fees. It must widen when books are thin, when informed flow is likely, and near the extremes where one play flips 50¢ to 95¢. Too tight = donating to the informed; too wide = earning nothing.</div></div>
+      <div class="fc" data-fcid="steam"><div class="fc-term">flow toxicity &amp; steam <span class="fc-know">know it</span></div><div class="fc-back">Recreational flow is noise you're paid to serve; sharp flow predicts moves. "Steam" = a coordinated sharp move hitting every venue in seconds — laggards get picked off at stale prices. Desks classify flow (size, timing, the CLV of its fills) to decide whom to widen against.</div></div>
+    </div>
+    <div class="note"><strong>What interviewers listen for</strong> (from practitioner sources + how prediction-markets desks publicly describe the work): the four concepts that most separate a sharp candidate are <strong>CLV over P&amp;L</strong> (you understand variance and sample size in binary outcomes), <strong>de-vigging done right</strong> (compare to the no-vig close; proportional de-vig is wrong because of favorite-longshot bias), <strong>fractional-Kelly reasoning</strong> (not the formula — the <em>why</em>: noisy edge estimates make full Kelly over-betting), and <strong>adverse-selection framing</strong> (a quote is an option you've written; spread/size/skew are the response). Bonus: tie evaluation to sizing — "log loss is a Kelly bettor's growth rate."</div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Check the concepts</div>
+    <div class="quiz" data-qid="q6-4">
+      <div class="q-tag">Concept quiz</div>
+      <p class="q-text">Your model's bets LOST money over 200 games — but consistently beat the de-vigged closing line. A sharp desk concludes…</p>
+      <div class="q-opts">
+        <button class="q-opt">The model is broken; 200 games of losses is the market telling you so</button>
+        <button class="q-opt">Results are what counts — scale it down but keep tinkering</button>
+        <button class="q-opt" data-ok>Probably keep it: 200 binary outcomes is nearly pure noise, while beating the close is fast-converging evidence of real information</button>
+      </div>
+      <p class="q-expl">CLV converges orders of magnitude faster than P&amp;L. Desks bless losing strategies that beat the close and kill winning ones that don't. Reaching for CLV instead of the win-loss record is the single sharpest signal you can send.</p>
+    </div>
+    <div class="quiz" data-qid="q6-5">
+      <div class="q-tag">Concept quiz</div>
+      <p class="q-text">Quoted probabilities on a market sum to 104%. You divide each by 1.04 and call it fair. What's the flaw?</p>
+      <div class="q-opts">
+        <button class="q-opt" data-ok>The vig isn't spread evenly — longshots carry more of it (favorite-longshot bias), so proportional de-vigging misprices the extremes; power or Shin methods correct for this</button>
+        <button class="q-opt">Nothing — dividing by the sum is exact</button>
+        <button class="q-opt">You should subtract 4% from each outcome instead</button>
+      </div>
+      <p class="q-expl">Books load margin onto longshots because bettors overpay for them. Naive proportional de-vig therefore leaves you systematically wrong exactly where prices are most distorted — near 0 and 1.</p>
+    </div>
+    <div class="quiz" data-qid="q6-6">
+      <div class="q-tag">Concept quiz</div>
+      <p class="q-text">Why do serious bettors stake HALF of what the Kelly formula says?</p>
+      <div class="q-opts">
+        <button class="q-opt">Regulation caps stake sizes on most venues</button>
+        <button class="q-opt" data-ok>Because p is an estimate: over-betting from overestimated edge cuts growth AND adds variance — half-Kelly keeps ~75% of growth at ~25% of the variance</button>
+        <button class="q-opt">Superstition — full Kelly is mathematically optimal and fractions just feel safer</button>
+      </div>
+      <p class="q-expl">Kelly is optimal only if your probability is exactly right. With a noisy model, nominal full-Kelly is effectively beyond true Kelly — strictly dominated. Growth ≈ linear in the fraction, variance ≈ quadratic: the trade is asymmetric in your favor.</p>
+    </div>
+    <div class="quiz" data-qid="q6-7">
+      <div class="q-tag">Concept quiz</div>
+      <p class="q-text">A resting quote in an event market is best thought of as…</p>
+      <div class="q-opts">
+        <button class="q-opt">A small fee you charge for providing a service</button>
+        <button class="q-opt">A lottery ticket — random flow hits it</button>
+        <button class="q-opt" data-ok>A free option you've written to anyone better informed — which is why you widen, shrink, skew, or pull it when informed flow is likely</button>
+      </div>
+      <p class="q-expl">Adverse selection: the people who choose to trade with you know things (injury, lineup, weather). Framing spread/size/skew as the <em>response</em> to that is what separates a market-making mindset from a pure modeling one.</p>
+    </div>
+
+    <div class="ex" data-exid="ex6-2" data-extitle="V2 Say it like the desk">
+      <div class="ex-head"><span class="ex-tag">Exercise V2</span><span class="ex-title">Say it like the desk</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Three answers, 2–3 sentences each, in your own words (these are interview answers, not code): (a) "Your model lost money last month — why do you still trust it?" (b) "Why not bet full Kelly?" (c) "You're quoting a tennis match and a sharp account keeps hitting your ask — what do you do and why?"</p>
+      <textarea class="ex-code" placeholder="(a) ...&#10;&#10;(b) ...&#10;&#10;(c) ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) CLV: outcomes are noise at this sample size; I beat the de-vigged close. (b) noisy edge estimate → full Kelly over-bets → less growth, more variance. (c) adverse selection: widen/shrink/skew or pull; their fills predict moves — reprice toward their side.</div></details>
+    </div>
+  </div>
+
+  
+</section>
+
 </main>
 
 <div class="export-bar"><button class="export-btn" id="exportBtn">⬆ Export answers for grading</button></div>
@@ -1505,7 +1521,7 @@ if(store.get('theme'))document.documentElement.dataset.theme=store.get('theme');
 const tabs=$$('.tab');
 function showLvl(n){
   tabs.forEach(t=>t.classList.toggle('on',t.dataset.lvl==n));
-  [1,2,3,4,5,6,7,8,9].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
+  [1,2,3,4,5,6,7,8,9,10].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
   window.scrollTo(0,0);store.set('lvl',n);
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showLvl(t.dataset.lvl)));
@@ -1539,7 +1555,7 @@ $$('.ex').forEach(ex=>{
 
 /* ── progress chips ── */
 function updateProgress(){
-  [1,2,3,4,5,6,7,8,9].forEach(n=>{
+  [1,2,3,4,5,6,7,8,9,10].forEach(n=>{
     const sec=$('#lvl'+n), qs=$$('.quiz',sec), exs=$$('.ex',sec);
     const done=qs.filter(q=>q.classList.contains('done')).length+exs.filter(e=>$('.ex-done',e).checked).length;
     $('[data-prog="'+n+'"]').textContent=done+'/'+(qs.length+exs.length);
