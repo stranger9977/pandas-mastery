@@ -170,6 +170,11 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
 .fc.known .fc-know{background:var(--good-soft);color:var(--good);border-color:var(--good)}
 .fc-tools{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
 .fc-count{font-size:.75rem;color:var(--muted)}
+.drill-meta{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;font-size:.74rem;color:var(--muted);min-height:1.4rem}
+.drill-badge{background:var(--chip);border-radius:99px;padding:.05rem .55rem}
+.drill-q{font-size:.93rem;margin:.7rem 0;min-height:2.4rem}
+.drill-actions{display:flex;gap:.5rem;margin-top:.7rem;min-height:2.2rem;align-items:center}
+.drill-ctl{display:flex;gap:.6rem;margin-top:.5rem;align-items:center}
 
 /* ── export ────────────────────────────────────── */
 .export-bar{position:fixed;bottom:1rem;left:0;right:0;display:flex;justify-content:center;pointer-events:none;z-index:60}
@@ -1119,6 +1124,20 @@ weather    : obs_time, city, rain_mm</pre>
       <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) CLV: outcomes are noise at this sample size; I beat the de-vigged close. (b) noisy edge estimate → full Kelly over-bets → less growth, more variance. (c) adverse selection: widen/shrink/skew or pull; their fills predict moves — reprice toward their side.</div></details>
     </div>
   </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Drill mode</div>
+    <h3>Anki-style drill — the whole deck</h3>
+    <p>Every card above (vocab + concepts, 40 cards) becomes a multiple-choice question: the definition appears with the term blanked out, you pick the term. A hit promotes the card (<em>new → learning → solid</em>); a miss sends it to box 0 and re-queues it a few questions later. Weakest cards always come first, and progress saves on this device — built for phone reps in a spare minute.</p>
+    <div class="card" id="drillBox">
+      <div class="drill-meta"></div>
+      <div class="drill-q">Hit <strong>Start</strong> — new and shaky cards come up first.</div>
+      <div class="q-opts drill-opts"></div>
+      <div class="drill-actions"></div>
+      <div class="drill-ctl"><button class="next-btn" id="drillStart">▶ Start drill</button><button class="theme-btn" id="drillReset">reset progress</button></div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════ TOOLKIT · PLOTS ═══════════════════════ -->
@@ -1605,6 +1624,80 @@ $$('[data-shuffle]').forEach(b=>b.addEventListener('click',()=>{
   const g=$('#'+b.dataset.shuffle);
   [...g.children].sort(()=>Math.random()-.5).forEach(c=>g.appendChild(c));
 }));
+
+/* ── anki-style drill ── */
+(function(){
+  const dbox=$('#drillBox'); if(!dbox)return;
+  const qEl=$('.drill-q',dbox),optsEl=$('.drill-opts',dbox),metaEl=$('.drill-meta',dbox),actEl=$('.drill-actions',dbox);
+  const STOP=new Set(['and','the','you','your','its','are','was','not','for']);
+  let pool=[],queue=[],cur=null,right=0,wrong=0;
+  function load(){
+    pool=$$('.fc').map(c=>({
+      id:c.dataset.fcid,
+      term:$('.fc-term',c).childNodes[0].textContent.trim(),
+      back:$('.fc-back',c).textContent.trim(),
+      group:c.closest('.fc-grid').id,
+      box:+(store.get('drill.'+c.dataset.fcid)||0)
+    }));
+  }
+  function mask(text,term){
+    let out=text;
+    term.toLowerCase().split(/[^a-z]+/).filter(w=>w.length>=3&&!STOP.has(w)).forEach(w=>{
+      out=out.replace(new RegExp(w,'gi'),'____');
+    });
+    return out;
+  }
+  function meta(){
+    const solid=pool.filter(c=>c.box>=3).length,learn=pool.filter(c=>c.box>0&&c.box<3).length,fresh=pool.filter(c=>c.box===0).length;
+    metaEl.innerHTML='<span class="drill-badge">'+fresh+' new</span><span class="drill-badge">'+learn+' learning</span><span class="drill-badge">'+solid+' solid</span>'+
+      ((right+wrong)?'<span class="drill-badge">'+right+' ✓ · '+wrong+' ✗ this run</span>':'');
+  }
+  function start(){
+    load();right=0;wrong=0;
+    queue=pool.slice().sort((a,b)=>(a.box-b.box)||(Math.random()-.5));
+    next();
+  }
+  function next(){
+    if(!queue.length){
+      qEl.innerHTML='<strong>Deck done.</strong> '+right+' right, '+wrong+' wrong. Misses are back in box 0 — run it again.';
+      optsEl.innerHTML='';actEl.innerHTML='';meta();return;
+    }
+    cur=queue.shift();
+    let others=pool.filter(c=>c.id!==cur.id&&c.group===cur.group);
+    if(others.length<3)others=others.concat(pool.filter(c=>c.id!==cur.id&&c.group!==cur.group));
+    const opts=[cur].concat(others.sort(()=>Math.random()-.5).slice(0,3)).sort(()=>Math.random()-.5);
+    qEl.innerHTML='<span class="q-tag">Which term is this?</span><p style="margin-top:.3rem">'+mask(cur.back,cur.term)+'</p>';
+    optsEl.innerHTML='';actEl.innerHTML='';
+    opts.forEach(o=>{
+      const b=document.createElement('button');
+      b.className='q-opt';b.textContent=o.term;
+      b.addEventListener('click',()=>answer(b,o));
+      optsEl.appendChild(b);
+    });
+    meta();
+  }
+  function answer(btn,o){
+    if(actEl.innerHTML)return;
+    const ok=(o.id===cur.id);
+    $$('.q-opt',optsEl).forEach(b=>{if(b.textContent===cur.term)b.classList.add('right')});
+    if(!ok)btn.classList.add('wrong');
+    if(ok){right++;cur.box=Math.min(cur.box+1,4)}
+    else{wrong++;cur.box=0;queue.splice(Math.min(4,queue.length),0,cur)}
+    store.set('drill.'+cur.id,cur.box);
+    const nb=document.createElement('button');
+    nb.className='next-btn';nb.textContent='Next →';
+    nb.addEventListener('click',next);
+    actEl.appendChild(nb);nb.focus();
+    meta();
+  }
+  $('#drillStart').addEventListener('click',start);
+  $('#drillReset').addEventListener('click',()=>{
+    load();pool.forEach(c=>store.set('drill.'+c.id,'0'));load();
+    right=0;wrong=0;queue=[];
+    qEl.textContent='Progress reset. Hit Start.';optsEl.innerHTML='';actEl.innerHTML='';meta();
+  });
+  load();meta();
+})();
 
 /* wire up animation cards */
 $$('.anim').forEach(a=>{
