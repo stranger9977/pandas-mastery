@@ -159,6 +159,18 @@ details.ex-hint{margin-top:.5rem;font-size:.85rem}
 details.ex-hint summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:.8rem}
 details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-radius:8px;padding:.55rem .75rem}
 
+/* ── flashcards ────────────────────────────────── */
+.fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.6rem;margin:1rem 0}
+.fc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;cursor:pointer;box-shadow:var(--shadow)}
+.fc-term{font-weight:700;font-family:"Avenir Next",sans-serif;font-size:.92rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.fc-back{display:none;font-size:.85rem;margin-top:.45rem;color:var(--ink)}
+.fc.open .fc-back{display:block}
+.fc-know{font-size:.66rem;border:1px solid var(--line);border-radius:99px;padding:.12rem .55rem;color:var(--muted);flex:none}
+.fc.known{border-color:var(--good)}
+.fc.known .fc-know{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+.fc-tools{display:flex;gap:.5rem;align-items:center;margin:.4rem 0}
+.fc-count{font-size:.75rem;color:var(--muted)}
+
 /* ── export ────────────────────────────────────── */
 .export-bar{position:fixed;bottom:1rem;left:0;right:0;display:flex;justify-content:center;pointer-events:none;z-index:60}
 .export-btn{pointer-events:auto;background:var(--ink);color:var(--bg);border-radius:99px;padding:.55rem 1.3rem;
@@ -186,6 +198,8 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
     <button class="tab" data-lvl="3"><span class="t-lvl">Level 3</span><span class="t-name">Analyst</span><span class="t-prog" data-prog="3">0/8</span></button>
     <button class="tab" data-lvl="4"><span class="t-lvl">Level 4</span><span class="t-name">Expert</span><span class="t-prog" data-prog="4">0/8</span></button>
     <button class="tab" data-lvl="5"><span class="t-lvl">Level 5</span><span class="t-name">Gauntlet</span><span class="t-prog" data-prog="5">0/10</span></button>
+    <button class="tab" data-lvl="6"><span class="t-lvl">Toolkit</span><span class="t-name">Vocab</span><span class="t-prog" data-prog="6">0/4</span></button>
+    <button class="tab" data-lvl="7"><span class="t-lvl">Toolkit</span><span class="t-name">Plots</span><span class="t-prog" data-prog="7">0/3</span></button>
   </nav>
 </header>
 
@@ -507,6 +521,7 @@ t.between_time("09:30", "16:00")               # regular hours, any day</pre>
     <pre class="code">bars["vol20"]  = bars["close"].pct_change().rolling(20).std()
 bars["ewm10"]  = bars["close"].ewm(span=10).mean()
 bars["feat"]   = bars["vol20"].shift(1)    # only yesterday's info predicts today</pre>
+    <div class="note teal">All three lines keep the row count — rolling/ewm/shift are transform-shaped verbs. So yes: each lands as its <strong>own column</strong>, one value per bar (the first 19 are NaN while the 20-window fills). You never choose to broadcast; the verb already has that shape. Reading the vol20 line inside-out: <code class="ic">pct_change()</code> = returns per bar → <code class="ic">rolling(20)</code> = trailing window of 20 bars → <code class="ic">.std()</code> = how bumpy — i.e. <strong>volatility</strong>.</div>
     <div class="note">Chant it: <strong>shift · backward · split.</strong> shift(1) your rolling features; merge_asof <code class="ic">direction="backward"</code>; split train/test by time. Three doors leakage sneaks through, three locks.</div>
     <div class="quiz" data-qid="q3-1">
       <div class="q-tag">Quiz</div>
@@ -531,6 +546,11 @@ vwap["vwap"] = vwap["notional"] / vwap["volume"]</pre>
     <p>Per-symbol z-score of size — a broadcast (transform), because the answer belongs on every row:</p>
     <pre class="code">g = trades.groupby("symbol", observed=True)["size"]
 trades["size_z"] = (trades["size"] - g.transform("mean")) / g.transform("std")</pre>
+    <div class="anim" data-anim="zscore3">
+      <div class="anim-head"><span class="a-title">Why transform: the z-score round trip</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Rows split into symbol buckets → each bucket computes its mean &amp; std → those numbers ride BACK to every original row → each row asks "how unusual am I, in units of my own symbol's typical?" A 300-lot is huge for AAA and boring for BBB — that's why the stats must be per-group and per-row at once.</div>
+    </div>
     <p><strong>Group by a category AND a time bucket at once</strong> — this is the underrated tool. <code class="ic">pd.Grouper</code> lets a time bucket sit inside a normal groupby, no index gymnastics:</p>
     <pre class="code">bars = trades.groupby(
     ["symbol", pd.Grouper(key="ts", freq="5min")], observed=True
@@ -905,6 +925,161 @@ weather    : obs_time, city, rain_mm</pre>
   </div>
 </section>
 
+<!-- ═══════════════════════ TOOLKIT · VOCAB ═══════════════════════ -->
+<section class="level" id="lvl6" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Toolkit · Market vocab</div>
+    <h2>The words, without the mystique</h2>
+    <p>Every term you'll meet in the exercises, in plain English with a sports hook. Tap a card to flip it; mark <em>know it</em> when it sticks. The pandas is easy once the words stop costing you brainpower.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">The scalper — prices</div>
+    <p>One image carries half the glossary: a ticket scalper outside the stadium. He'll <strong>buy</strong> your ticket for $80 and <strong>sell</strong> you one for $100, all day, adjusting his numbers as tip-off approaches.</p>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg1">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg1"></span></div>
+    <div class="fc-grid" id="fcg1">
+      <div class="fc" data-fcid="bid"><div class="fc-term">bid <span class="fc-know">know it</span></div><div class="fc-back">The price buyers will <strong>pay right now</strong>. The scalper's "I'll give you $80 for yours." Always the lower number.</div></div>
+      <div class="fc" data-fcid="ask"><div class="fc-term">ask (offer) <span class="fc-know">know it</span></div><div class="fc-back">The price sellers will <strong>accept right now</strong>. "Yours for $100." Always above the bid.</div></div>
+      <div class="fc" data-fcid="spread"><div class="fc-term">spread <span class="fc-know">know it</span></div><div class="fc-back"><code class="ic">ask − bid</code>. The scalper's $20 gap — his paycheck for standing there taking risk. Tight spread = busy, competitive market.</div></div>
+      <div class="fc" data-fcid="mid"><div class="fc-term">mid <span class="fc-know">know it</span></div><div class="fc-back"><code class="ic">(bid + ask) / 2</code>. The fair-ish price between the two advertisements. The usual "true price" proxy in analysis.</div></div>
+      <div class="fc" data-fcid="quote"><div class="fc-term">quote <span class="fc-know">know it</span></div><div class="fc-back">The current advertised pair — bid &amp; ask (with sizes). It's an <em>advertisement</em>, not a transaction; it changes constantly even when nobody trades.</div></div>
+      <div class="fc" data-fcid="crossed"><div class="fc-term">crossed quote <span class="fc-know">know it</span></div><div class="fc-back">bid &gt; ask — someone's willing to pay more than sellers are asking. Almost always <strong>bad data</strong>; a cleaning flag, like a negative game score.</div></div>
+      <div class="fc" data-fcid="prevail"><div class="fc-term">prevailing quote <span class="fc-know">know it</span></div><div class="fc-back">The quote in force at a given instant = the latest one at-or-before it. The ice-cream sign. This is exactly what <code class="ic">merge_asof</code> fetches.</div></div>
+      <div class="fc" data-fcid="liquidity"><div class="fc-term">liquidity <span class="fc-know">know it</span></div><div class="fc-back">How much you can trade without moving the price. "Providing liquidity" = being the scalper: quoting both sides so others can always deal.</div></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Trades &amp; bars — events</div>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg2">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg2"></span></div>
+    <div class="fc-grid" id="fcg2">
+      <div class="fc" data-fcid="trade"><div class="fc-term">trade / print <span class="fc-know">know it</span></div><div class="fc-back">An actual transaction — someone accepted the advertised price. Has a price and a size. "It printed at 99.10" = a trade happened there.</div></div>
+      <div class="fc" data-fcid="tick"><div class="fc-term">tick <span class="fc-know">know it</span></div><div class="fc-back">One row of raw market data (a single trade or quote update). "Tick data" = every event, unaggregated — the play-by-play log.</div></div>
+      <div class="fc" data-fcid="size"><div class="fc-term">size / volume <span class="fc-know">know it</span></div><div class="fc-back">size = shares in ONE trade. volume = total shares over a period. Like one play's yards vs the game's total yards.</div></div>
+      <div class="fc" data-fcid="notional"><div class="fc-term">notional <span class="fc-know">know it</span></div><div class="fc-back"><code class="ic">price × size</code> = the <strong>dollars</strong> that changed hands. 200 shares at $50 = $10,000 notional. The money-weighted view of a trade.</div></div>
+      <div class="fc" data-fcid="ohlc"><div class="fc-term">bar / OHLC <span class="fc-know">know it</span></div><div class="fc-back">A time bucket's four-number summary: <strong>O</strong>pen (first), <strong>H</strong>igh (max), <strong>L</strong>ow (min), <strong>C</strong>lose (last). A box score for 5 minutes of trading. <code class="ic">.resample("5min").ohlc()</code></div></div>
+      <div class="fc" data-fcid="vwap"><div class="fc-term">VWAP <span class="fc-know">know it</span></div><div class="fc-back">Volume-Weighted Average Price = <code class="ic">sum(price×size) / sum(size)</code>. The average price <em>actually paid</em>, where a 10,000-share trade counts 100× a 100-share one. The benchmark for "did I trade well today."</div></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Stats on prices — features</div>
+    <div class="fc-tools"><button class="next-btn" data-shuffle="fcg3">⇄ Shuffle</button><span class="fc-count" data-fccount="fcg3"></span></div>
+    <div class="fc-grid" id="fcg3">
+      <div class="fc" data-fcid="return"><div class="fc-term">return <span class="fc-know">know it</span></div><div class="fc-back">The %-change bar to bar: <code class="ic">pct_change()</code>. Log return = <code class="ic">np.log(p).diff()</code> — nearly identical for small moves, and adds up cleanly across periods. Prices aren't comparable across stocks; returns are.</div></div>
+      <div class="fc" data-fcid="vol"><div class="fc-term">volatility (realized) <span class="fc-know">know it</span></div><div class="fc-back">The std of returns over a window: <strong>how bumpy the ride has been</strong>. <code class="ic">ret.rolling(20).std()</code>. Annualize by ×√(periods per year). A team analogy: not their average margin, but how wildly it swings.</div></div>
+      <div class="fc" data-fcid="zscore"><div class="fc-term">z-score <span class="fc-know">know it</span></div><div class="fc-back"><code class="ic">(x − mean) / std</code> — "how unusual is this, in units of typical?" z=+2 ≈ top 2%. Per-group z-score (via two transforms) asks: unusual <em>for its own symbol</em>.</div></div>
+      <div class="fc" data-fcid="ewm"><div class="fc-term">EWM / span <span class="fc-know">know it</span></div><div class="fc-back">A moving average where <strong>recent points count more</strong>, fading exponentially. <code class="ic">ewm(span=10).mean()</code> — span ≈ how many periods really matter. Small span = fast &amp; jumpy; big = slow &amp; smooth. A team's "form" where last night matters most.</div></div>
+      <div class="fc" data-fcid="stale"><div class="fc-term">stale <span class="fc-know">know it</span></div><div class="fc-back">Old information still on the books — a quote from 5 minutes ago in a fast market. <code class="ic">tolerance=</code> in merge_asof is your staleness bouncer: too old → NaN instead of a lie.</div></div>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Check yourself</div>
+    <div class="quiz" data-qid="q6-1">
+      <div class="q-tag">Vocab quiz</div>
+      <p class="q-text">The scalper buys tickets at $80, sells at $100. Translate to market speak:</p>
+      <div class="q-opts">
+        <button class="q-opt">bid 100 · ask 80 · spread −20</button>
+        <button class="q-opt" data-ok>bid 80 · ask 100 · spread 20 — and his edge is earning that spread on each round trip</button>
+        <button class="q-opt">mid 80 · notional 100 · spread 20</button>
+      </div>
+      <p class="q-expl">Bid = what he pays (low), ask = what he charges (high), spread = ask − bid = his compensation for carrying risk. If bid ever exceeds ask, the quote is "crossed" — in data, that's a cleaning flag.</p>
+    </div>
+    <div class="quiz" data-qid="q6-2">
+      <div class="q-tag">Vocab quiz</div>
+      <p class="q-text">Read this line out loud: <code class="ic">bars["vol20"] = bars["close"].pct_change().rolling(20).std()</code></p>
+      <div class="q-opts">
+        <button class="q-opt">The average price of the last 20 bars, smoothed</button>
+        <button class="q-opt">The biggest price move in the last 20 bars</button>
+        <button class="q-opt" data-ok>Per-bar returns → trailing 20-bar window → their standard deviation: how bumpy the ride has recently been (realized volatility), one value per row</button>
+      </div>
+      <p class="q-expl">Inside-out: pct_change = returns; rolling(20) = the trailing window; std = the bumpiness. And because rolling is transform-shaped, it lands as its own column — no broadcasting decision needed.</p>
+    </div>
+    <div class="quiz" data-qid="q6-3">
+      <div class="q-tag">Vocab quiz</div>
+      <p class="q-text">ewm(span=5) vs ewm(span=50) on the same series — which statement is right?</p>
+      <div class="q-opts">
+        <button class="q-opt" data-ok>span=5 reacts fast but jitters; span=50 is smooth but slow to notice changes — the classic responsiveness-vs-noise tradeoff you'd grid-search</button>
+        <button class="q-opt">span=50 uses more recent data than span=5</button>
+        <button class="q-opt">They differ only in how many rows of output they produce</button>
+      </div>
+      <p class="q-expl">Span sets how far back the "memory" meaningfully reaches. Small span = recent games dominate (hot-hand detector); large span = season-long form. Both produce one value per row.</p>
+    </div>
+
+    <div class="ex" data-exid="ex6-1" data-extitle="V1 Vocab → pandas translation">
+      <div class="ex-head"><span class="ex-tag">Exercise V1</span><span class="ex-title">Vocab → pandas translation</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Four one-liners from <code class="ic">taq</code> (columns: ts, symbol, price, size, bid, ask): <code class="ic">mid</code>, <code class="ic">spread</code>, <code class="ic">notional</code>, and <code class="ic">size_z</code> (per-symbol z-score of size). Each is either plain column math or the broadcast verb — say which as a comment.</p>
+      <textarea class="ex-code" placeholder="taq[&quot;mid&quot;] = ...&#10;taq[&quot;spread&quot;] = ...&#10;taq[&quot;notional&quot;] = ...&#10;taq[&quot;size_z&quot;] = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">mid/spread/notional: row-wise column math, no groupby. size_z: two <code class="ic">transform</code>s — (size − group mean) / group std.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TOOLKIT · PLOTS ═══════════════════════ -->
+<section class="level" id="lvl7" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Toolkit · Day-of plotting</div>
+    <h2>Five plots you can type with your eyes closed</h2>
+    <p>In the exercise, plots aren't decoration — they're how you <em>narrate</em>. Each plot answers exactly one question, and you say the question out loud as you type it. Memorize five shapes, total.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">The five</div>
+    <pre class="code">import matplotlib.pyplot as plt
+
+# 1 THE LOOK — "what does this series even look like?"
+df["close"].plot(title="AAA close")
+
+# 2 THE DISTRIBUTION — "are there outliers / how heavy are the tails?"
+df["ret"].hist(bins=50)
+plt.title("1-min returns")
+
+# 3 RAW vs SMOOTH — "is my cleaning/smoothing doing what I claim?"
+ax = df["close"].plot(alpha=.5, label="raw")
+df["close"].rolling(20).mean().plot(ax=ax, label="20-bar mean")
+ax.legend()
+
+# 4 THE HOLES — "where is data missing, and is it random?"
+df.isna().sum().plot.bar(title="missing by column")
+
+# 5 PRED vs ACTUAL — "is the model biased, or just noisy?"
+plt.scatter(y_true, y_pred, alpha=.4)
+plt.axline((0, 0), slope=1)          # the perfect-model line
+plt.xlabel("actual"); plt.ylabel("predicted")</pre>
+    <ul>
+      <li><strong>Title everything.</strong> An untitled plot forces the interviewer to ask what they're looking at — that's negative narration.</li>
+      <li><strong>One plot, one sentence.</strong> Before typing, say the question; after it renders, say the answer. "Here's the raw series — those ×2 spikes look like bad prints; I'll flag |log return| &gt; 0.1."</li>
+      <li>In a notebook, plots render on cell-run. If nothing shows in a script: <code class="ic">plt.show()</code>.</li>
+      <li>Groupwise version of #1 when comparing symbols: <code class="ic">df.groupby("symbol")["close"].plot(legend=True)</code> — or better, pivot to columns first and <code class="ic">.plot()</code> the frame.</li>
+    </ul>
+    <div class="quiz" data-qid="q7-1">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Your cleaning step flags spurious prints. Which plot proves the cleaning worked, and what do you SAY?</p>
+      <div class="q-opts">
+        <button class="q-opt">#2 histogram — "the distribution is now normal"</button>
+        <button class="q-opt" data-ok>#3 raw-vs-clean overlay on the same axes — "the spikes are gone and everything else is untouched"</button>
+        <button class="q-opt">#4 missingness bar — "no more NaNs"</button>
+      </div>
+      <p class="q-expl">Before/after on shared axes is the only plot that shows BOTH claims at once: the bad points removed AND the good points preserved. The histogram supports it (tails shrink) but can't show "everything else untouched."</p>
+    </div>
+
+    <div class="ex" data-exid="ex7-1" data-extitle="P1 The five, from memory">
+      <div class="ex-head"><span class="ex-tag">Exercise P1</span><span class="ex-title">The five, from memory</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Type all five plot skeletons cold, each with its one-sentence question as a comment above it. This is the drill you rerun the morning of.</p>
+      <textarea class="ex-code" placeholder="# 1 what does it look like?&#10;&#10;# 2 ...&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">look · distribution · raw-vs-smooth · holes · pred-vs-actual. Series.plot / .hist / two plots one ax / isna().sum().plot.bar / scatter + axline.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex7-2" data-extitle="P2 Pick the plot">
+      <div class="ex-head"><span class="ex-tag">Exercise P2</span><span class="ex-title">Pick the plot</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">For each claim, name the plot number and write its one line: (a) "stock f is missing a third of its data" (b) "my vol feature actually tracks the calm and wild stretches" (c) "the model under-predicts high-vol days".</p>
+      <textarea class="ex-code" placeholder="# (a) plot #_, line:&#10;# (b)&#10;# (c)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) #4. (b) #3-style overlay: price (or |returns|) with vol20 on a secondary view — the windowed line should rise in the wild stretches. (c) #5: points sag below the 45° line at the high end.</div></details>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <div class="export-bar"><button class="export-btn" id="exportBtn">⬆ Export answers for grading</button></div>
@@ -938,7 +1113,7 @@ if(store.get('theme'))document.documentElement.dataset.theme=store.get('theme');
 const tabs=$$('.tab');
 function showLvl(n){
   tabs.forEach(t=>t.classList.toggle('on',t.dataset.lvl==n));
-  [1,2,3,4,5].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
+  [1,2,3,4,5,6,7].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
   window.scrollTo(0,0);store.set('lvl',n);
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showLvl(t.dataset.lvl)));
@@ -972,7 +1147,7 @@ $$('.ex').forEach(ex=>{
 
 /* ── progress chips ── */
 function updateProgress(){
-  [1,2,3,4,5].forEach(n=>{
+  [1,2,3,4,5,6,7].forEach(n=>{
     const sec=$('#lvl'+n), qs=$$('.quiz',sec), exs=$$('.ex',sec);
     const done=qs.filter(q=>q.classList.contains('done')).length+exs.filter(e=>$('.ex-done',e).checked).length;
     $('[data-prog="'+n+'"]').textContent=done+'/'+(qs.length+exs.length);
@@ -1060,7 +1235,7 @@ function bucketAnim(stage,cfg){
     for(let i=0;i<ghosts.length;i++){
       const it=cfg.items[i];
       ghosts[i].classList.remove('ghost');
-      ghosts[i].innerHTML=(it.color?'<span class="dot" style="background:'+it.color+'"></span>':'')+it.label+' · '+groupVal(it.group);
+      ghosts[i].innerHTML=(it.color?'<span class="dot" style="background:'+it.color+'"></span>':'')+it.label+' · '+(cfg.rowResult?cfg.rowResult(it):groupVal(it.group));
       await sleep(140);
     }
   };
@@ -1283,6 +1458,48 @@ BUILDERS.twoptr=stage=>{
     qEls.forEach(q=>q.classList.remove('hit'));
   };
 };
+
+BUILDERS.zscore3=stage=>bucketAnim(stage,{
+  items:[
+    {label:'AAA 100',group:'AAA',color:AMB,z:'-1.00'},
+    {label:'BBB 500',group:'BBB',color:TEA,z:'-0.71'},
+    {label:'AAA 200',group:'AAA',color:AMB,z:' 0.00'},
+    {label:'AAA 300',group:'AAA',color:AMB,z:'+1.00'},
+    {label:'BBB 700',group:'BBB',color:TEA,z:'+0.71'}],
+  buckets:[{key:'AAA',label:'AAA',dot:AMB},{key:'BBB',label:'BBB',dot:TEA}],
+  result:m=>{
+    const v=m.map(x=>parseFloat(x.label.split(' ')[1]));
+    const mean=v.reduce((s,x)=>s+x,0)/v.length;
+    const sd=Math.sqrt(v.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(v.length-1));
+    return 'mean='+mean.toFixed(0)+' std='+sd.toFixed(0);
+  },
+  transform:true,
+  rowResult:it=>'z='+it.z
+});
+
+/* ── flashcards ── */
+$$('.fc').forEach(c=>{
+  const id=c.dataset.fcid;
+  if(store.get('fc.'+id)==='1')c.classList.add('known');
+  c.addEventListener('click',()=>c.classList.toggle('open'));
+  $('.fc-know',c).addEventListener('click',e=>{
+    e.stopPropagation();
+    c.classList.toggle('known');
+    store.set('fc.'+id,c.classList.contains('known')?'1':'0');
+    fcCounts();
+  });
+});
+function fcCounts(){
+  $$('[data-fccount]').forEach(s=>{
+    const g=$('#'+s.dataset.fccount);
+    s.textContent=$$('.fc.known',g).length+'/'+$$('.fc',g).length+' known';
+  });
+}
+fcCounts();
+$$('[data-shuffle]').forEach(b=>b.addEventListener('click',()=>{
+  const g=$('#'+b.dataset.shuffle);
+  [...g.children].sort(()=>Math.random()-.5).forEach(c=>g.appendChild(c));
+}));
 
 /* wire up animation cards */
 $$('.anim').forEach(a=>{
