@@ -877,7 +877,21 @@ taq["bid"].isna().mean()                         # audit: % refused as stale</pr
       <textarea class="ex-code" placeholder="# 1 read  2 weekly  3 team table  4 hot  5 asof" spellcheck="false"></textarea>
       <details class="ex-hint"><summary>hint</summary><div class="hint-body">read_csv(parse_dates=["date"]) → set_index CAPTURED → resample → agg(gp=..., wins=("win","sum")) → transform("mean") compare (the mask IS the flag) → sort both, merge_asof(on="date", by="team").</div></details>
     </div>
-    <div class="note"><strong>Daily protocol:</strong> clear yesterday's answers (retype, don't reread), run the Gauntlet, export, get graded. When Drills 6–8 come out identical-in-shape three days running, on/by is yours forever.</div>
+    <div class="ex" data-exid="ex5-11" data-extitle="G11 equals-paren-comma ×3">
+      <div class="ex-head"><span class="ex-tag">Drill 11</span><span class="ex-title">equals-paren-comma ×3</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Three named aggs, three domains, zero colons. (a) trades → per symbol: <code class="ic">n</code> = number of trades, <code class="ic">volume</code> = total size, <code class="ic">hi</code> = max price. (b) games → per team: <code class="ic">gp</code>, <code class="ic">ppg</code>, <code class="ic">wins</code>. (c) deliveries → per city: <code class="ic">n</code>, <code class="ic">worst</code> = max minutes_late. Say the chant while typing: <em>equals, paren, quote-comma-quote</em>.</p>
+      <textarea class="ex-code" placeholder="# (a)&#10;&#10;# (b)&#10;&#10;# (c)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">.agg() is a function call → kwargs use <code class="ic">=</code>. Each value is a TUPLE: <code class="ic">("col", "func")</code> — comma, both quoted. Colons live inside <code class="ic">{}</code> only; there are no braces in .agg(). n = ("price","count") — count any column, or use ("size","count").</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-12" data-extitle="G12 The row and its group">
+      <div class="ex-head"><span class="ex-tag">Drill 12</span><span class="ex-title">The row and its group</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Both patterns compare a row to its own group — write both. (a) <code class="ic">pct</code>: each trade's share of its symbol's total volume (numerator = the row itself, no verb). (b) <code class="ic">hot</code>: did each game beat its team's season scoring average? (comparison against a broadcast mean — NOT a fixed number).</p>
+      <textarea class="ex-code" placeholder="# (a) share of group&#10;&#10;# (b) beat the group average" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) <code class="ic">trades["size"] / trades.groupby("symbol")["size"].transform("sum")</code>. (b) <code class="ic">games["pts_for"] &gt; games.groupby("team")["pts_for"].transform("mean")</code>. Shape check: both outputs are one value per ROW → the verb (when needed) is transform.</div></details>
+    </div>
+
+    <div class="note"><strong>Daily protocol:</strong> clear yesterday's answers (retype, don't reread), run the Gauntlet, export, get graded. When Drills 6–8 come out identical-in-shape three days running, on/by is yours forever — same test for 11–12 and the agg shape.</div>
   </div>
 </section>
 
