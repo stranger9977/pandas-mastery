@@ -211,6 +211,8 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
     <button class="tab" data-lvl="5"><span class="t-lvl">Level 5</span><span class="t-name">Gauntlet</span><span class="t-prog" data-prog="5">0/10</span></button>
     <button class="tab" data-lvl="6"><span class="t-lvl">Toolkit</span><span class="t-name">Vocab+</span><span class="t-prog" data-prog="6">0/8</span></button>
     <button class="tab" data-lvl="7"><span class="t-lvl">Toolkit</span><span class="t-name">Plots</span><span class="t-prog" data-prog="7">0/3</span></button>
+    <button class="tab" data-lvl="8"><span class="t-lvl">Toolkit</span><span class="t-name">Model</span><span class="t-prog" data-prog="8">0/6</span></button>
+    <button class="tab" data-lvl="9"><span class="t-lvl">Toolkit</span><span class="t-name">Day-of</span><span class="t-prog" data-prog="9">0/3</span></button>
   </nav>
 </header>
 
@@ -1258,6 +1260,218 @@ plt.xlabel("predicted prob"); plt.ylabel("observed freq")</pre>
   </div>
 </section>
 
+<!-- ═══════════════════════ TOOLKIT · MODELING ═══════════════════════ -->
+<section class="level" id="lvl8" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Toolkit · Modeling</div>
+    <h2>Estimate, interval, verdict</h2>
+    <p>The full exercise has a spine — eight blocks, two halves of four. Everything in this tab is the PREDICT half: a model that beats (or honestly fails to beat) a baseline, and an <strong>estimate with a defensible confidence interval</strong>. That pair is the deliverable.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">The spine</div>
+    <h3>Eight blocks, chanted</h3>
+    <pre class="code"># PREP the data:      0 Setup · 1 Ingest · 2 EDA · 3 Clean
+# PREDICT + report:   4 Features · 5 Model · 6 Interval · 7 Report</pre>
+    <p>Say it once out loud. If you can produce those eight comment headers in an empty notebook, you can never be lost — every moment of the exercise is "filling the current block."</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Block 5 · Model</div>
+    <h3>Baseline first, model second, time-aware always</h3>
+    <pre class="code">from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.dummy import DummyRegressor
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+
+# target = NEXT period (shift -1); features are already lagged (shift +1)
+y = feat["vol"].shift(-1)
+X = feat[["vol_lag1", "ret_lag1", "range_lag1"]]
+ok = X.notna().all(axis=1) & y.notna()
+X, y = X[ok], y[ok]
+
+tscv = TimeSeriesSplit(n_splits=5)          # walk-forward: train past, test future
+
+base  = DummyRegressor(strategy="mean")     # baseline 1: the mean
+persist_mae = (y - X["vol_lag1"]).abs().mean()   # baseline 2: "tomorrow = today"
+
+model = Pipeline([("scale", StandardScaler()), ("ridge", Ridge())])
+scores = -cross_val_score(model, X, y, cv=tscv,
+                          scoring="neg_mean_absolute_error")
+print(f"model MAE {scores.mean():.4f}  vs  persistence {persist_mae:.4f}")</pre>
+    <ul>
+      <li><strong>Baseline first.</strong> A model only means something relative to the dumb answer. For anything autocorrelated (volatility!), <em>persistence</em> — "tomorrow = today" — is brutally hard to beat. Losing to it narrowly is a <em>finding</em>, not a failure: say it.</li>
+      <li><strong>TimeSeriesSplit, never shuffled KFold.</strong> Random folds train on Thursday to predict Tuesday — the future leaking backward. This is the third leakage front (shift · backward · <strong>split</strong>).</li>
+      <li><strong>Pipeline wraps the scaler</strong> so it's re-fit inside each fold — scaling on the full data before splitting is leakage front three-and-a-half.</li>
+    </ul>
+    <div class="quiz" data-qid="q8-1">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Why is shuffled KFold specifically wrong for this data, even with lagged features?</p>
+      <div class="q-opts">
+        <button class="q-opt">It's slower than TimeSeriesSplit</button>
+        <button class="q-opt" data-ok>Adjacent rows are correlated, so training on rows AFTER the test rows means the model has effectively seen the test period — scores come out flattering and fake</button>
+        <button class="q-opt">KFold can't handle NaN values</button>
+      </div>
+      <p class="q-expl">With autocorrelated series, a test day's neighbors sit in the training set under random folds — the model memorizes the neighborhood. Walk-forward splits (train on past, test on strictly later data) are the honest simulation of live deployment.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Block 6 · Interval</div>
+    <h3>The confidence-interval menu — pick one, defend it</h3>
+    <p>Researched from statistical references and quant-interview write-ups. You need ONE default plus the awareness of when it breaks. The menu, cheapest first:</p>
+    <pre class="code"># A · ANALYTIC (30-second answer) — SE of the mean, and the vol analogue
+m, s, n = r.mean(), r.std(ddof=1), len(r)
+ci_mean = (m - 1.96*s/np.sqrt(n), m + 1.96*s/np.sqrt(n))
+se_vol  = s / np.sqrt(2*n)            # delta-method SE of a std estimate
+
+# B · BOOTSTRAP percentile (THE default) — works for ANY statistic
+boots = [r.sample(len(r), replace=True).std() for _ in range(2000)]
+ci = np.percentile(boots, [2.5, 97.5])
+
+# C · BLOCK bootstrap (the time-series upgrade) — vol clusters, so
+#     resample CHUNKS to preserve the clustering
+b = 20                                # block ≈ n**(1/3) … sqrt(n)
+idx = np.random.randint(0, len(r)-b, size=(2000, len(r)//b))
+boots = [np.std(np.concatenate([r.values[s:s+b] for s in row]), ddof=1)
+         for row in idx]
+ci = np.percentile(boots, [2.5, 97.5])
+
+# D · CV-fold spread (for MODEL SCORES, not parameters)
+m, se = scores.mean(), scores.std(ddof=1)/np.sqrt(len(scores))
+ci = (m - 2.78*se, m + 2.78*se)       # t with 4 df for 5 folds
+
+# E · RESIDUAL-QUANTILE prediction interval (for a NEW observation)
+resid = y_val - model.predict(X_val)  # OUT-OF-SAMPLE residuals only
+lo, hi = np.quantile(resid, [0.05, 0.95])
+pi = (pred + lo, pred + hi)           # 90% PI — much wider than a CI</pre>
+    <ul>
+      <li><strong>The default script</strong> (this is the move): give A in 30 seconds — <em>"first-order, SE of a std is s/√2n"</em> — then say <em>"but returns are fat-tailed and volatility clusters, so let me verify with a block bootstrap."</em> Speed, then rigor, and you said "autocorrelation" out loud.</li>
+      <li><strong>Each method's gotcha</strong> (the follow-up they'll probe): A assumes iid + normal-ish; B's iid resampling <em>destroys serial dependence</em> — plain bootstrap on clustered data gives intervals that are too narrow; C — "how did you pick block length?" (rule of thumb n^⅓–√n, check the CI is stable across choices); D — CV folds share training data, so the interval is <em>optimistic</em> (there's provably no unbiased variance estimator for k-fold CV — knowing this is a flex); E — in-sample residuals make it too narrow, and one global quantile ignores that error itself clusters.</li>
+      <li><strong>CI vs PI — the classic trap.</strong> A confidence interval brackets a <em>parameter</em> (the mean, the vol). A prediction interval brackets <em>tomorrow's actual value</em> — parameter uncertainty PLUS irreducible noise, so it's much wider. When they say "how sure are you about tomorrow," they're asking for a PI.</li>
+    </ul>
+    <div class="quiz" data-qid="q8-2">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">You bootstrap daily returns point-by-point to get a CI on volatility. The interviewer says "returns cluster — does your interval know that?" What's true?</p>
+      <div class="q-opts">
+        <button class="q-opt" data-ok>No — resampling single points destroys the clustering, which understates vol-of-vol, so the interval is too NARROW; fix by resampling contiguous blocks</button>
+        <button class="q-opt">Yes — the bootstrap is distribution-free, so dependence doesn't matter</button>
+        <button class="q-opt">No — the interval comes out too WIDE, so it's at least conservative</button>
+      </div>
+      <p class="q-expl">"Distribution-free" ≠ "dependence-free": the iid bootstrap assumes exchangeable draws. Shuffled points lose the calm-stretch/wild-stretch structure, and the error is in the dangerous direction — overconfidence. Block bootstrap keeps chunks intact.</p>
+    </div>
+    <div class="quiz" data-qid="q8-3">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">"Give me a range for what realized vol will actually be NEXT month." Which tool?</p>
+      <div class="q-opts">
+        <button class="q-opt">The CI on your historical vol estimate — that's what CIs are for</button>
+        <button class="q-opt">The CV-fold spread of the model's MAE</button>
+        <button class="q-opt" data-ok>A prediction interval — e.g. held-out residual quantiles around the forecast — because a new observation carries irreducible noise on top of estimation error</button>
+      </div>
+      <p class="q-expl">CI = "where's the parameter." PI = "where will reality land." Quoting a CI when asked about a future value is the single most common uncertainty mistake — the PI is always wider, and saying why marks you as someone who's been burned properly.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Block 7 · Report</div>
+    <h3>The closing move</h3>
+    <pre class="code">print(f"HEADLINE  annualized vol = {vol:.3f}  95% CI [{lo:.3f}, {hi:.3f}]")
+print(f"MODEL     MAE {scores.mean():.4f} vs persistence {persist_mae:.4f}"
+      f"  -> beats baseline? {'YES' if scores.mean() &lt; persist_mae else 'NO'}")</pre>
+    <p>Then the sentence, out loud: <em>"Estimate X, interval [lo, hi] from a block bootstrap — I'd trust the ranking more than the point value, and the model doesn't clearly beat persistence, which is typical for vol. With more time I'd add a regime feature and check the interval's stability across block lengths."</em> Honest number → honest uncertainty → honest next step. That's the whole game.</p>
+
+    <div class="ex" data-exid="ex8-1" data-extitle="M1 The model block, cold">
+      <div class="ex-head"><span class="ex-tag">Exercise M1</span><span class="ex-title">The model block, cold</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">From memory: given <code class="ic">feat</code> with columns vol, vol_lag1, ret_lag1 — build y (next-period vol), X, drop NaN rows, mean + persistence baselines, scaled Ridge pipeline, 5-fold time-aware CV, print model-vs-baseline MAE.</p>
+      <textarea class="ex-code" placeholder="# target, features, mask&#10;# baselines&#10;# pipeline + TimeSeriesSplit + cross_val_score&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">y=shift(-1); mask both; DummyRegressor("mean") + (y − X["vol_lag1"]).abs().mean(); Pipeline([scaler, Ridge()]); cross_val_score(..., cv=TimeSeriesSplit(5), scoring="neg_mean_absolute_error").</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex8-2" data-extitle="M2 Bootstrap, then block-bootstrap">
+      <div class="ex-head"><span class="ex-tag">Exercise M2</span><span class="ex-title">Bootstrap, then block-bootstrap</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Given returns series <code class="ic">r</code>: (a) a 95% percentile-bootstrap CI for its std, 2000 draws. (b) Upgrade to blocks of 20 and say in a comment WHY the plain version was too narrow.</p>
+      <textarea class="ex-code" placeholder="# (a) iid bootstrap&#10;&#10;# (b) block bootstrap + the why&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) list-comp of r.sample(len(r), replace=True).std() → np.percentile([2.5, 97.5]). (b) random block starts, concatenate chunks; vol clusters, iid shuffling destroys that → understated vol-of-vol.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex8-3" data-extitle="M3 The report, verbatim">
+      <div class="ex-head"><span class="ex-tag">Exercise M3</span><span class="ex-title">The report, verbatim</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Write your closing report as you'd SAY it: the estimate + interval sentence, the model-vs-baseline verdict (assume the model narrowly loses to persistence), and one "with more time" item. Three sentences, your own words.</p>
+      <textarea class="ex-code" placeholder="(say it, then type it)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">estimate + CI + method; "persistence is a tough bar for vol — the model matching it is expected, not alarming"; next step = a named feature or interval-stability check.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════ TOOLKIT · DAY-OF ═══════════════════════ -->
+<section class="level" id="lvl9" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Toolkit · Live interview</div>
+    <h2>Steering out of rocky waters</h2>
+    <p>Researched from interviewer-authored sources (600+ interviews conducted, quant-firm prep guides, interviewing.io data). The headline finding: <strong>process is graded over completion, silence is graded worst of all, and asking for a hint scores better than flailing.</strong> Every tactic below has a verbatim line you can say.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">The opening two minutes</div>
+    <h3>Set the contract before touching the keyboard</h3>
+    <ul>
+      <li><strong>Clarify first — vague prompts are often deliberate.</strong> <em>"Before I start: is this price or return data, what frequency, should the estimate be annualized — and is the deliverable the estimate plus an interval, or also a forecast?"</em></li>
+      <li><strong>Propose the process.</strong> <em>"My usual flow: look at the data for two minutes, sketch the plan as comments, get a crude end-to-end answer, then improve the weakest part. Sound good?"</em> Interviewers read this as teamwork.</li>
+      <li><strong>Type the spine as comments</strong> (Setup · Ingest · EDA · Clean · Features · Model · Interval · Report). Now you're never lost — just filling the current block.</li>
+    </ul>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">The rocky-waters playbook</div>
+    <h3>Situation → verbatim line</h3>
+    <ul>
+      <li><strong>Blanking on syntax</strong> → drop to English and keep moving: <em>"I'm blanking on the exact resample signature — writing what I want as a comment and doing it with groupby on the date, which I know cold. Same result."</em> Momentum beats recall.</li>
+      <li><strong>Error spiral</strong> → read the LAST traceback line aloud, isolate in a fresh cell on <code class="ic">df.head(10)</code>: <em>"Last line says KeyError on 'date' — so my rename upstream didn't take. Checking df.columns."</em> Converts panic into a two-minute experiment.</li>
+      <li><strong>Silent too long</strong> (the #1 graded failure) → narrate the fork: <em>"I was going rolling here, but for a point estimate a plain std is simpler — does that match what you want?"</em> Half-thoughts make you unhelpable; spoken forks make you coachable.</li>
+      <li><strong>Stuck conceptually</strong> → know / want / gap: <em>"I know I need uncertainty on this std; I know bootstrap does that for iid data; the gap is whether iid holds — let me check autocorrelation of squared returns."</em> Locating the gap IS the demonstration.</li>
+      <li><strong>Genuinely don't know</strong> → honesty + bridge: <em>"I don't remember the sampling distribution of variance — but the bootstrap gives it to me empirically, so let me do that."</em> Quant firms explicitly screen for this; confident wrongness is the fast fail.</li>
+      <li><strong>Need help</strong> → ask early, framed as collaboration: <em>"I'm torn on demeaning returns before the vol calc — can I get your read, or should I pick one and state the assumption?"</em> Hints cost a little; flailing costs a lot.</li>
+      <li><strong>NaN flood after a join</strong> → audit, don't hide: <em>"38% unmatched — that's a finding. Let me see which symbols/times before I decide anything."</em> (You know this one already.)</li>
+      <li><strong>Model loses to baseline</strong> → the honest sentence: <em>"Persistence is a tough bar for vol — the model matching it is expected. The estimate and interval stand either way."</em></li>
+      <li><strong>Anxiety spike</strong> → name it once, out loud, then checklist: <em>"Give me ten seconds to collect the plan."</em> (breathe) <em>"Right — three steps: clean, estimate, bootstrap the interval."</em> Naming the plan is the regulator — it converts free-floating stress into a list.</li>
+      <li><strong>Halfway mark</strong> → time-check aloud and re-prioritize together: <em>"Forty minutes in: I have the estimate and a naive CI. I'd rather harden the CI against autocorrelation than prettify plots — agree?"</em></li>
+    </ul>
+    <div class="note"><strong>The priority stack when time runs short:</strong> crude end-to-end result → cleaning defensible → the real computation → uncertainty → baseline comparison → polish. Ship the top of the stack; NAME what you skipped: "with more time I'd…" — an accurate list of what you'd do next scores like doing it.</div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Check yourself</div>
+    <div class="quiz" data-qid="q9-1">
+      <div class="q-tag">Scenario</div>
+      <p class="q-text">Twenty minutes in, your merge keeps erroring and you feel the spiral starting. Best next move?</p>
+      <div class="q-opts">
+        <button class="q-opt">Keep quietly trying variations until one works — interruptions look bad</button>
+        <button class="q-opt">Apologize and start the whole exercise over with a cleaner approach</button>
+        <button class="q-opt" data-ok>Read the last traceback line out loud, reproduce on df.head(10) in a fresh cell, and narrate the hypothesis — and if two minutes doesn't crack it, ask for the interviewer's read</button>
+      </div>
+      <p class="q-expl">Interviewer-authored sources are unanimous: silent variation-guessing is the worst-graded behavior, systematic isolation narrated aloud is among the best, and a requested hint costs less than five minutes of flailing. Restarting throws away your sunk structure for no credit.</p>
+    </div>
+    <div class="quiz" data-qid="q9-2">
+      <div class="q-tag">Scenario</div>
+      <p class="q-text">Ten minutes left, you have an estimate but no interval and messy plots. What wins?</p>
+      <div class="q-opts">
+        <button class="q-opt">Fix the plots — visual polish is what's remembered</button>
+        <button class="q-opt" data-ok>A quick bootstrap CI plus a spoken "with more time" list — the deliverable is estimate + uncertainty, and naming the skipped work scores like doing it</button>
+        <button class="q-opt">Start a fancier model so the ending is impressive</button>
+      </div>
+      <p class="q-expl">The deliverable is the estimate WITH uncertainty; ten lines of bootstrap beats any polish. The "if I had more time" close — specific, prioritized — is the strongest last impression available and it's free.</p>
+    </div>
+
+    <div class="ex" data-exid="ex9-1" data-extitle="D1 Your opening + your reset">
+      <div class="ex-head"><span class="ex-tag">Exercise D1</span><span class="ex-title">Your opening + your reset</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">In your own words (you'll say these Monday, so write them YOUR way): (a) your two opening clarifying questions, (b) your process-contract sentence, (c) your anxiety-reset line for when a block goes sideways. Practice each out loud twice after typing.</p>
+      <textarea class="ex-code" placeholder="(a) ...&#10;(b) ...&#10;(c) ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) data shape/frequency + what the deliverable is. (b) look → plan-as-comments → crude end-to-end → improve. (c) "ten seconds to collect the plan" + the three-step checklist.</div></details>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <div class="export-bar"><button class="export-btn" id="exportBtn">⬆ Export answers for grading</button></div>
@@ -1291,7 +1505,7 @@ if(store.get('theme'))document.documentElement.dataset.theme=store.get('theme');
 const tabs=$$('.tab');
 function showLvl(n){
   tabs.forEach(t=>t.classList.toggle('on',t.dataset.lvl==n));
-  [1,2,3,4,5,6,7].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
+  [1,2,3,4,5,6,7,8,9].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
   window.scrollTo(0,0);store.set('lvl',n);
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showLvl(t.dataset.lvl)));
@@ -1325,7 +1539,7 @@ $$('.ex').forEach(ex=>{
 
 /* ── progress chips ── */
 function updateProgress(){
-  [1,2,3,4,5,6,7].forEach(n=>{
+  [1,2,3,4,5,6,7,8,9].forEach(n=>{
     const sec=$('#lvl'+n), qs=$$('.quiz',sec), exs=$$('.ex',sec);
     const done=qs.filter(q=>q.classList.contains('done')).length+exs.filter(e=>$('.ex-done',e).checked).length;
     $('[data-prog="'+n+'"]').textContent=done+'/'+(qs.length+exs.length);
