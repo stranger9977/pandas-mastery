@@ -184,6 +184,12 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
 .drill-q{font-size:.93rem;margin:.7rem 0;min-height:2.4rem}
 .drill-actions{display:flex;gap:.5rem;margin-top:.7rem;min-height:2.2rem;align-items:center}
 .drill-ctl{display:flex;gap:.6rem;margin-top:.5rem;align-items:center}
+.drill-term{font-family:"Avenir Next",sans-serif;font-weight:700;font-size:1.2rem;margin:.35rem 0}
+.drill-back{background:var(--surface2);border-radius:9px;padding:.65rem .8rem;font-size:.88rem;margin-top:.5rem}
+.drill-grade{border-radius:9px;padding:.45rem 1rem;font-weight:700;font-size:.85rem;border:1px solid var(--line)}
+.g-again{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.g-good{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.g-easy{background:var(--good-soft);color:var(--good);border-color:var(--good)}
 
 /* ── export ────────────────────────────────────── */
 .export-bar{position:fixed;bottom:1rem;left:0;right:0;display:flex;justify-content:center;pointer-events:none;z-index:60}
@@ -1138,7 +1144,7 @@ weather    : obs_time, city, rain_mm</pre>
   <div class="topic">
     <div class="eyebrow">Drill mode</div>
     <h3>Anki-style drill — the whole deck</h3>
-    <p>Every card above (vocab + concepts, 40 cards) becomes a multiple-choice question: the definition appears with the term blanked out, you pick the term. A hit promotes the card (<em>new → learning → solid</em>); a miss sends it to box 0 and re-queues it a few questions later. Weakest cards always come first, and progress saves on this device — built for phone reps in a spare minute.</p>
+    <p>True Anki flow: the <strong>term</strong> comes up, you say the definition out loud (actually out loud — that's the rep), then flip and grade yourself honestly. <em>Again</em> sends the card to box 0 and re-queues it a few cards later; <em>Good</em> promotes it one box; <em>Easy</em> jumps two. Weakest cards always come first, progress saves on this device — built for phone reps in a spare minute.</p>
     <div class="card" id="drillBox">
       <div class="drill-meta"></div>
       <div class="drill-q">Hit <strong>Start</strong> — new and shaky cards come up first.</div>
@@ -1202,6 +1208,54 @@ plt.xlabel("actual"); plt.ylabel("predicted")</pre>
       <p class="ex-prompt">Type all five plot skeletons cold, each with its one-sentence question as a comment above it. This is the drill you rerun the morning of.</p>
       <textarea class="ex-code" placeholder="# 1 what does it look like?&#10;&#10;# 2 ...&#10;" spellcheck="false"></textarea>
       <details class="ex-hint"><summary>hint</summary><div class="hint-body">look · distribution · raw-vs-smooth · holes · pred-vs-actual. Series.plot / .hist / two plots one ax / isna().sum().plot.bar / scatter + axline.</div></details>
+    </div>
+
+    <div class="topic">
+      <div class="eyebrow">Model evaluation — four more</div>
+      <h3>After the model runs, the plots do the arguing</h3>
+      <pre class="code"># 6 RESIDUALS — "is the error random, or structured?"
+resid = y_true - y_pred
+plt.scatter(y_pred, resid, alpha=.4)
+plt.axhline(0)
+plt.xlabel("predicted"); plt.ylabel("residual")
+
+# 7 ERROR OVER TIME — "WHEN is the model wrong?"
+err = pd.Series((y_true - y_pred).abs(), index=test_index)
+err.rolling(20).mean().plot(title="rolling |error|")
+
+# 8 MODEL vs BASELINE — "am I beating the dumb answer?"
+pd.DataFrame({"model": err_model, "baseline": err_base}) \
+  .rolling(20).mean().plot(title="rolling MAE: model vs baseline")
+
+# 9 CALIBRATION — "when I say 70%, does it happen 70% of the time?"
+df = pd.DataFrame({"p": p_pred, "o": outcome})          # o is 0/1
+cal = df.groupby(pd.cut(df["p"], np.linspace(0, 1, 11)),
+                 observed=True).mean()
+plt.plot(cal["p"], cal["o"], marker="o")
+plt.axline((0, 0), slope=1)                             # perfect calibration
+plt.xlabel("predicted prob"); plt.ylabel("observed freq")</pre>
+      <ul>
+        <li><strong>#6</strong> — a healthy residual plot is a shapeless cloud around 0. A <em>funnel</em> (wider at high predictions) = variance grows with level; a <em>curve</em> = systematic bias the model could still learn. Point at the shape and name it.</li>
+        <li><strong>#7</strong> — errors clustered in time (one wild week) tell a different story than uniform noise: regime change, data problem, or a feature that went stale.</li>
+        <li><strong>#8</strong> — the honest chart. If the baseline line hugs yours, say so: "the model adds little over persistence here — I'd want more features before trusting it." That sentence wins interviews.</li>
+        <li><strong>#9</strong> — the prediction-markets flex: it's literally the calibration concept from the Vocab+ tab, drawn. Points below the 45° line = overconfident (things you call 80% happen less often). Note the pandas inside: <code class="ic">groupby(pd.cut(...))</code> — binning IS a groupby.</li>
+      </ul>
+      <div class="quiz" data-qid="q7-2">
+        <div class="q-tag">Quiz</div>
+        <p class="q-text">Your residual plot (#6) fans out — small at low predicted vol, huge at high predicted vol. What do you SAY?</p>
+        <div class="q-opts">
+          <button class="q-opt">"The model is broken — residuals should be constant"</button>
+          <button class="q-opt" data-ok>"Error scales with the level — classic for volatility. I'd consider a log-transformed target or evaluating relative error, and I'd trust the model's ranking more than its point estimates at the high end"</button>
+          <button class="q-opt">"Nothing — a fan shape is what a good fit looks like"</button>
+        </div>
+        <p class="q-expl">Heteroskedasticity isn't failure, it's information: high-vol regimes are intrinsically harder to pin down. Naming it, proposing the log-target fix, and downgrading confidence where the fan is wide is exactly the calibrated-uncertainty mindset the exercise rewards.</p>
+      </div>
+      <div class="ex" data-exid="ex7-3" data-extitle="P3 Calibration curve from memory">
+        <div class="ex-head"><span class="ex-tag">Exercise P3</span><span class="ex-title">Calibration curve from memory</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+        <p class="ex-prompt">Given <code class="ic">p_pred</code> (predicted probabilities) and <code class="ic">outcome</code> (0/1): bin into deciles, compute observed frequency per bin, plot predicted vs observed with the 45° line. Then one comment: what does it mean if your points sit BELOW the line at the high end?</p>
+        <textarea class="ex-code" placeholder="# bin → groupby → mean → plot + axline&#10;" spellcheck="false"></textarea>
+        <details class="ex-hint"><summary>hint</summary><div class="hint-body">pd.cut(p_pred, np.linspace(0,1,11)) → groupby(bins, observed=True).mean() → plot p vs o, axline slope 1. Below the line up high = overconfident: events you call 80% happen less than 80% — the market will happily take the other side.</div></details>
+      </div>
     </div>
 
     <div class="ex" data-exid="ex7-2" data-extitle="P2 Pick the plot">
@@ -1634,75 +1688,59 @@ $$('[data-shuffle]').forEach(b=>b.addEventListener('click',()=>{
   [...g.children].sort(()=>Math.random()-.5).forEach(c=>g.appendChild(c));
 }));
 
-/* ── anki-style drill ── */
+/* ── anki-style drill: front → recall → flip → self-grade ── */
 (function(){
   const dbox=$('#drillBox'); if(!dbox)return;
   const qEl=$('.drill-q',dbox),optsEl=$('.drill-opts',dbox),metaEl=$('.drill-meta',dbox),actEl=$('.drill-actions',dbox);
-  const STOP=new Set(['and','the','you','your','its','are','was','not','for']);
-  let pool=[],queue=[],cur=null,right=0,wrong=0;
+  let pool=[],queue=[],cur=null,seen=0,again=0;
   function load(){
     pool=$$('.fc').map(c=>({
       id:c.dataset.fcid,
       term:$('.fc-term',c).childNodes[0].textContent.trim(),
-      back:$('.fc-back',c).textContent.trim(),
-      group:c.closest('.fc-grid').id,
+      backHTML:$('.fc-back',c).innerHTML,
       box:+(store.get('drill.'+c.dataset.fcid)||0)
     }));
-  }
-  function mask(text,term){
-    let out=text;
-    term.toLowerCase().split(/[^a-z]+/).filter(w=>w.length>=3&&!STOP.has(w)).forEach(w=>{
-      out=out.replace(new RegExp(w,'gi'),'____');
-    });
-    return out;
   }
   function meta(){
     const solid=pool.filter(c=>c.box>=3).length,learn=pool.filter(c=>c.box>0&&c.box<3).length,fresh=pool.filter(c=>c.box===0).length;
     metaEl.innerHTML='<span class="drill-badge">'+fresh+' new</span><span class="drill-badge">'+learn+' learning</span><span class="drill-badge">'+solid+' solid</span>'+
-      ((right+wrong)?'<span class="drill-badge">'+right+' ✓ · '+wrong+' ✗ this run</span>':'');
+      (seen?'<span class="drill-badge">'+seen+' seen · '+again+' again this run</span>':'');
   }
+  function btn(txt,cls,fn){const b=document.createElement('button');b.className=cls;b.textContent=txt;b.addEventListener('click',fn);return b}
   function start(){
-    load();right=0;wrong=0;
+    load();seen=0;again=0;
     queue=pool.slice().sort((a,b)=>(a.box-b.box)||(Math.random()-.5));
     next();
   }
   function next(){
+    optsEl.innerHTML='';actEl.innerHTML='';
     if(!queue.length){
-      qEl.innerHTML='<strong>Deck done.</strong> '+right+' right, '+wrong+' wrong. Misses are back in box 0 — run it again.';
-      optsEl.innerHTML='';actEl.innerHTML='';meta();return;
+      qEl.innerHTML='<strong>Deck done.</strong> '+seen+' cards, '+again+' sent back to box 0. Run it again — the misses lead off.';
+      meta();return;
     }
     cur=queue.shift();
-    let others=pool.filter(c=>c.id!==cur.id&&c.group===cur.group);
-    if(others.length<3)others=others.concat(pool.filter(c=>c.id!==cur.id&&c.group!==cur.group));
-    const opts=[cur].concat(others.sort(()=>Math.random()-.5).slice(0,3)).sort(()=>Math.random()-.5);
-    qEl.innerHTML='<span class="q-tag">Which term is this?</span><p style="margin-top:.3rem">'+mask(cur.back,cur.term)+'</p>';
-    optsEl.innerHTML='';actEl.innerHTML='';
-    opts.forEach(o=>{
-      const b=document.createElement('button');
-      b.className='q-opt';b.textContent=o.term;
-      b.addEventListener('click',()=>answer(b,o));
-      optsEl.appendChild(b);
-    });
+    qEl.innerHTML='<span class="q-tag">Say the definition out loud, then flip</span><div class="drill-term">'+cur.term+'</div>';
+    actEl.appendChild(btn('Flip →','next-btn',reveal));
     meta();
   }
-  function answer(btn,o){
-    if(actEl.innerHTML)return;
-    const ok=(o.id===cur.id);
-    $$('.q-opt',optsEl).forEach(b=>{if(b.textContent===cur.term)b.classList.add('right')});
-    if(!ok)btn.classList.add('wrong');
-    if(ok){right++;cur.box=Math.min(cur.box+1,4)}
-    else{wrong++;cur.box=0;queue.splice(Math.min(4,queue.length),0,cur)}
+  function reveal(){
+    actEl.innerHTML='';
+    qEl.innerHTML+='<div class="drill-back">'+cur.backHTML+'</div>';
+    actEl.appendChild(btn('✗ Again','drill-grade g-again',()=>grade(0)));
+    actEl.appendChild(btn('✓ Good','drill-grade g-good',()=>grade(1)));
+    actEl.appendChild(btn('✓✓ Easy','drill-grade g-easy',()=>grade(2)));
+  }
+  function grade(g){
+    seen++;
+    if(g===0){again++;cur.box=0;queue.splice(Math.min(4,queue.length),0,cur)}
+    else cur.box=Math.min(cur.box+g,4);
     store.set('drill.'+cur.id,cur.box);
-    const nb=document.createElement('button');
-    nb.className='next-btn';nb.textContent='Next →';
-    nb.addEventListener('click',next);
-    actEl.appendChild(nb);nb.focus();
-    meta();
+    next();
   }
   $('#drillStart').addEventListener('click',start);
   $('#drillReset').addEventListener('click',()=>{
-    load();pool.forEach(c=>store.set('drill.'+c.id,'0'));load();
-    right=0;wrong=0;queue=[];
+    load();pool.forEach(c=>{c.box=0;store.set('drill.'+c.id,'0')});
+    seen=0;again=0;queue=[];
     qEl.textContent='Progress reset. Hit Start.';optsEl.innerHTML='';actEl.innerHTML='';meta();
   });
   load();meta();
