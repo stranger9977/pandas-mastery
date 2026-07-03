@@ -1,0 +1,1189 @@
+<title>Pandas Mastery — Time Series · GroupBy · Merging</title>
+<style>
+:root{
+  --bg:#F5F3EE; --surface:#FFFFFF; --surface2:#EFEDE5; --ink:#20241F; --muted:#6B7268;
+  --line:#DEDBD0; --accent:#B97A18; --accent-soft:#F3E3C6; --teal:#256E6E; --teal-soft:#D8E9E6;
+  --good:#237A4B; --good-soft:#DDEEE2; --bad:#B3423A; --bad-soft:#F4DEDC;
+  --chip:#E9E6DC; --code-bg:#1D221E; --code-ink:#E8E5DC;
+  --kw:#E0A33E; --str:#9CC98B; --com:#7C857C; --num:#7FC7C0; --fn:#D8B4E2;
+  --shadow:0 1px 2px rgba(30,35,28,.06),0 4px 14px rgba(30,35,28,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#101410; --surface:#181D18; --surface2:#1F251F; --ink:#E6E3D8; --muted:#98A093;
+    --line:#2B322B; --accent:#E0A33E; --accent-soft:#3A2F17; --teal:#5FB8B0; --teal-soft:#173231;
+    --good:#5BC98B; --good-soft:#12301E; --bad:#E77E72; --bad-soft:#3A1D1A;
+    --chip:#242A24; --code-bg:#0C100C; --code-ink:#DCD9CE;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101410; --surface:#181D18; --surface2:#1F251F; --ink:#E6E3D8; --muted:#98A093;
+  --line:#2B322B; --accent:#E0A33E; --accent-soft:#3A2F17; --teal:#5FB8B0; --teal-soft:#173231;
+  --good:#5BC98B; --good-soft:#12301E; --bad:#E77E72; --bad-soft:#3A1D1A;
+  --chip:#242A24; --code-bg:#0C100C; --code-ink:#DCD9CE;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --bg:#F5F3EE; --surface:#FFFFFF; --surface2:#EFEDE5; --ink:#20241F; --muted:#6B7268;
+  --line:#DEDBD0; --accent:#B97A18; --accent-soft:#F3E3C6; --teal:#256E6E; --teal-soft:#D8E9E6;
+  --good:#237A4B; --good-soft:#DDEEE2; --bad:#B3423A; --bad-soft:#F4DEDC;
+  --chip:#E9E6DC; --code-bg:#1D221E; --code-ink:#E8E5DC;
+  --shadow:0 1px 2px rgba(30,35,28,.06),0 4px 14px rgba(30,35,28,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  padding-bottom:6rem}
+.disp,h1,h2,h3{font-family:"Avenir Next","Trebuchet MS",-apple-system,sans-serif}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+code,pre,textarea.ex-code,.mt{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+
+/* ── header / tabs ─────────────────────────────── */
+.top{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--line)}
+.brand{max-width:46rem;margin:0 auto;padding:.9rem 1rem .5rem;display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap}
+.brand h1{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
+.brand .sub{color:var(--muted);font-size:.8rem}
+.theme-btn{margin-left:auto;font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.15rem .6rem}
+.tabbar{max-width:46rem;margin:0 auto;padding:0 .6rem;display:flex;gap:.25rem;overflow-x:auto;scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;display:flex;flex-direction:column;align-items:center;gap:.1rem;
+  padding:.45rem .7rem .55rem;border-bottom:3px solid transparent;color:var(--muted);min-width:5.2rem}
+.tab .t-lvl{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase}
+.tab .t-name{font-weight:700;font-size:.85rem;font-family:"Avenir Next",sans-serif}
+.tab .t-prog{font-size:.62rem;background:var(--chip);border-radius:99px;padding:0 .45rem}
+.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+.tab.on .t-prog{background:var(--accent-soft);color:var(--accent)}
+
+/* ── layout ────────────────────────────────────── */
+main{max-width:46rem;margin:0 auto;padding:1.2rem 1rem}
+.level[hidden]{display:none}
+.lvl-hero{padding:1.4rem 0 1.1rem}
+.lvl-hero .eyebrow{color:var(--accent)}
+.lvl-hero h2{font-size:1.7rem;line-height:1.15;letter-spacing:-.02em;text-wrap:balance;margin:.2rem 0 .5rem}
+.lvl-hero p{color:var(--muted);max-width:36rem}
+.eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.topic{margin:2.2rem 0}
+.topic>h3{font-size:1.25rem;letter-spacing:-.01em;margin:.15rem 0 .6rem;text-wrap:balance}
+.topic p{margin:.6rem 0;max-width:40rem}
+.topic ul,.topic ol{margin:.6rem 0 .6rem 1.2rem;max-width:38rem}
+.topic li{margin:.25rem 0}
+strong{font-weight:650}
+.hr{border:none;border-top:1px solid var(--line);margin:2.4rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:1rem;margin:1rem 0}
+.note{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:.7rem .9rem;margin:.9rem 0;font-size:.92rem}
+.note.teal{border-left-color:var(--teal)}
+.scroll{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+
+/* ── code ──────────────────────────────────────── */
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:.85rem 1rem;
+  font-size:.8rem;line-height:1.6;overflow-x:auto;margin:.8rem 0}
+pre.code .kw{color:var(--kw)} pre.code .str{color:var(--str)} pre.code .com{color:var(--com);font-style:italic}
+pre.code .num{color:var(--num)} pre.code .fn{color:var(--fn)}
+code.ic{background:var(--chip);border-radius:5px;padding:.05rem .35rem;font-size:.84em}
+
+/* ── mini tables (diagrams) ────────────────────── */
+table.mt{border-collapse:collapse;font-size:.74rem;background:var(--surface)}
+.mt th{background:var(--surface2);color:var(--muted);font-weight:600;text-align:left}
+.mt th,.mt td{border:1px solid var(--line);padding:.22rem .55rem;white-space:nowrap}
+.mt .hi{background:var(--accent-soft)} .mt .hi2{background:var(--teal-soft)}
+.mt .nan{color:var(--bad);font-style:italic}
+.tbl-cap{font-size:.7rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:.2rem 0 .3rem}
+
+/* ── animations ────────────────────────────────── */
+.anim{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+  padding:.9rem;margin:1rem 0}
+.anim-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+.anim-head .a-title{font-weight:700;font-size:.88rem;font-family:"Avenir Next",sans-serif}
+.btn-play{margin-left:auto;background:var(--accent);color:#fff;border-radius:99px;
+  padding:.28rem .95rem;font-weight:700;font-size:.8rem;flex:none}
+@media (prefers-color-scheme:dark){.btn-play{color:#141414}}
+:root[data-theme="dark"] .btn-play{color:#141414}
+:root[data-theme="light"] .btn-play{color:#fff}
+.btn-play:disabled{opacity:.45;cursor:default}
+.stage{position:relative;min-height:120px}
+.a-note{font-size:.78rem;color:var(--muted);margin-top:.6rem}
+.chip-row{display:flex;flex-wrap:wrap;gap:.35rem}
+.dchip{display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--line);background:var(--surface2);
+  border-radius:8px;padding:.14rem .5rem;font-size:.72rem;font-family:ui-monospace,"SF Mono",Menlo,monospace;white-space:nowrap}
+.dchip .dot{width:.55rem;height:.55rem;border-radius:99px;flex:none}
+.dchip.ghost{opacity:.28}
+.bucket{border:1.5px dashed var(--line);border-radius:10px;padding:.5rem;min-height:3.2rem;flex:1;min-width:0}
+.bucket .b-label{font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem;display:flex;gap:.3rem;align-items:center}
+.bucket .b-body{display:flex;flex-wrap:wrap;gap:.3rem;align-content:flex-start}
+.bucket .b-result{margin-top:.4rem;font-weight:700;font-size:.8rem;font-family:ui-monospace,"SF Mono",Menlo,monospace;color:var(--accent);opacity:0;transition:opacity .5s}
+.bucket.lit{border-color:var(--accent)}
+.bucket .b-result.show{opacity:1}
+.lane{position:relative;height:3.4rem;margin:.4rem 0}
+.lane .l-label{position:absolute;left:0;top:0;font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lane .l-track{position:absolute;left:0;right:0;top:1.9rem;border-top:2px solid var(--line)}
+.tick{position:absolute;top:1.05rem;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.15rem}
+.tick .t-dot{width:.7rem;height:.7rem;border-radius:99px;background:var(--teal);border:2px solid var(--surface)}
+.tick.trade .t-dot{background:var(--accent);border-radius:2px}
+.tick .t-time{font-size:.6rem;color:var(--muted);font-family:ui-monospace,monospace}
+.tick .t-val{font-size:.62rem;font-family:ui-monospace,monospace;font-weight:700}
+.tick.dim{opacity:.3}
+.tick.hit .t-dot{box-shadow:0 0 0 4px var(--accent-soft)}
+svg.wire{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.wire path{fill:none;stroke:var(--accent);stroke-width:1.6;stroke-dasharray:4 3;opacity:0;transition:opacity .4s}
+.wire path.show{opacity:1}
+.result-strip{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem;min-height:1.7rem}
+
+/* ── quiz ──────────────────────────────────────── */
+.quiz{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:1rem;margin:1rem 0}
+.quiz .q-tag{font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)}
+.quiz .q-text{font-weight:600;margin:.25rem 0 .7rem}
+.q-opts{display:flex;flex-direction:column;gap:.45rem}
+.q-opt{text-align:left;border:1px solid var(--line);border-radius:9px;padding:.5rem .75rem;font-size:.9rem;background:var(--surface2);transition:transform .08s}
+.q-opt:active{transform:scale(.99)}
+.quiz.done .q-opt{cursor:default}
+.q-opt.right{background:var(--good-soft);border-color:var(--good);color:var(--ink)}
+.q-opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.q-expl{display:none;margin-top:.7rem;font-size:.86rem;background:var(--surface2);border-radius:8px;padding:.6rem .8rem}
+.quiz.done .q-expl{display:block}
+
+/* ── exercises ─────────────────────────────────── */
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:1rem;margin:1rem 0}
+.ex-head{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.ex-tag{font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.ex-title{font-weight:700;font-family:"Avenir Next",sans-serif;font-size:.95rem}
+.ex-done-w{margin-left:auto;display:flex;align-items:center;gap:.3rem;font-size:.72rem;color:var(--muted)}
+.ex-prompt{font-size:.9rem;margin:.5rem 0}
+textarea.ex-code{width:100%;min-height:7.5rem;background:var(--code-bg);color:var(--code-ink);
+  border:1px solid var(--line);border-radius:10px;padding:.7rem .8rem;font-size:.8rem;line-height:1.6;resize:vertical}
+textarea.ex-code::placeholder{color:var(--com)}
+details.ex-hint{margin-top:.5rem;font-size:.85rem}
+details.ex-hint summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:.8rem}
+details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-radius:8px;padding:.55rem .75rem}
+
+/* ── export ────────────────────────────────────── */
+.export-bar{position:fixed;bottom:1rem;left:0;right:0;display:flex;justify-content:center;pointer-events:none;z-index:60}
+.export-btn{pointer-events:auto;background:var(--ink);color:var(--bg);border-radius:99px;padding:.55rem 1.3rem;
+  font-weight:700;font-size:.85rem;box-shadow:var(--shadow);font-family:"Avenir Next",sans-serif}
+.toast{position:fixed;bottom:4rem;left:50%;transform:translateX(-50%) translateY(8px);background:var(--good);color:#fff;
+  border-radius:9px;padding:.5rem .9rem;font-size:.82rem;font-weight:600;opacity:0;transition:.3s;z-index:70;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.export-fallback{display:none;position:fixed;inset:8% 5%;z-index:80;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:1rem;box-shadow:var(--shadow);flex-direction:column;gap:.6rem}
+.export-fallback.show{display:flex}
+.export-fallback textarea{flex:1;font-size:.72rem;background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.6rem}
+.next-cta{display:flex;justify-content:flex-end;margin:2rem 0 1rem}
+.next-btn{background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:.55rem 1rem;font-weight:700;font-family:"Avenir Next",sans-serif}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <h1>Pandas Mastery</h1>
+    <span class="sub">Time series · GroupBy · Merging — candy piles to the trading desk</span>
+    <button class="theme-btn" id="themeBtn" aria-label="toggle theme">◐ theme</button>
+  </div>
+  <nav class="tabbar" id="tabbar" aria-label="levels">
+    <button class="tab on" data-lvl="1"><span class="t-lvl">Level 1</span><span class="t-name">ELI5</span><span class="t-prog" data-prog="1">0/6</span></button>
+    <button class="tab" data-lvl="2"><span class="t-lvl">Level 2</span><span class="t-name">ELI14</span><span class="t-prog" data-prog="2">0/8</span></button>
+    <button class="tab" data-lvl="3"><span class="t-lvl">Level 3</span><span class="t-name">Analyst</span><span class="t-prog" data-prog="3">0/8</span></button>
+    <button class="tab" data-lvl="4"><span class="t-lvl">Level 4</span><span class="t-name">Expert</span><span class="t-prog" data-prog="4">0/8</span></button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═══════════════════════ LEVEL 1 · ELI5 ═══════════════════════ -->
+<section class="level" id="lvl1">
+  <div class="lvl-hero">
+    <div class="eyebrow">Level 1 · Explain like I'm 5</div>
+    <h2>Sorting candy, growing sunflowers, and matching name tags</h2>
+    <p>No jargon yet. Three ideas, told with kid stuff. Every fancy pandas trick in levels 2–4 is secretly one of these three moves.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">First — what even is a table?</div>
+    <h3>A DataFrame is a sticker chart</h3>
+    <p>Each <strong>row</strong> is one thing that happened. Each <strong>column</strong> is one fact about it. And every row has a <strong>name tag</strong> on the left — pandas calls it the <em>index</em>. That name tag is the whole secret: pandas lines things up by name tag, not by position in line.</p>
+    <div class="card scroll">
+      <div class="tbl-cap">candy — one row per piece of candy</div>
+      <table class="mt">
+        <tr><th>(tag)</th><th>color</th><th>kind</th><th>yum</th></tr>
+        <tr><td>0</td><td>red</td><td>gummy</td><td>5</td></tr>
+        <tr><td>1</td><td>green</td><td>gummy</td><td>3</td></tr>
+        <tr><td>2</td><td>red</td><td>chocolate</td><td>4</td></tr>
+        <tr><td>3</td><td>blue</td><td>gummy</td><td>2</td></tr>
+        <tr><td>4</td><td>red</td><td>gummy</td><td>5</td></tr>
+        <tr><td>5</td><td>green</td><td>chocolate</td><td>4</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Idea 1 · GroupBy</div>
+    <h3>Dump the bag. Sort into piles. Count each pile.</h3>
+    <p>You dump your Halloween bag on the floor. Mom says: <em>“how many reds do you have?”</em> You don't stare at the messy heap — you <strong>sort into piles by color</strong>, then <strong>count each pile</strong>, then <strong>write one line per pile</strong>. That's it. That's <code class="ic">groupby</code>. Grown-ups call it split → apply → combine.</p>
+    <div class="anim" data-anim="candy">
+      <div class="anim-head"><span class="a-title">Watch the sort happen</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Split: candies fly to their color pile. Apply: each pile gets counted. Combine: one answer per pile.</div>
+    </div>
+    <pre class="code">candy.groupby("color")["kind"].count()
+# red      3
+# green    2
+# blue     1</pre>
+    <div class="quiz" data-qid="q1-1">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">You sort your toys into bins by type, then find the heaviest toy in each bin. Which part is the “apply”?</p>
+      <div class="q-opts">
+        <button class="q-opt">Putting the toys into bins</button>
+        <button class="q-opt" data-ok>Finding the heaviest toy in each bin</button>
+        <button class="q-opt">Buying more toys</button>
+      </div>
+      <p class="q-expl">Split = sorting into bins. <strong>Apply = the thing you do to each bin</strong> (max weight). Combine = writing down one answer per bin. Every groupby question decomposes into these three.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Idea 2 · Time series</div>
+    <h3>The sunflower diary</h3>
+    <p>Every morning you measure your sunflower and write the date next to the number. Congratulations — that's a <strong>time series</strong>: numbers with a clock attached, in order. Because time is attached, you can ask time questions: <em>“how tall was it in June?”</em> or <em>“scoop each week's measurements into one jar — what's the weekly average?”</em> Scooping days into weeks has a grown-up name: <strong>resample</strong>. It's just groupby where the piles are <em>chunks of time</em>.</p>
+    <div class="anim" data-anim="jars">
+      <div class="anim-head"><span class="a-title">Days get scooped into week jars</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">14 daily measurements → 2 week jars → 1 average per jar. resample = groupby over time buckets.</div>
+    </div>
+    <div class="quiz" data-qid="q1-2">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">You measured your sunflower every day, but you only want one number per week. That move is…</p>
+      <div class="q-opts">
+        <button class="q-opt">Deleting six days out of every seven</button>
+        <button class="q-opt" data-ok>Scooping each week's days into a jar and summarizing the jar</button>
+        <button class="q-opt">Measuring more often</button>
+      </div>
+      <p class="q-expl">You keep all the information and <strong>summarize each time bucket</strong> (mean, max, last…). Deleting rows loses data; resampling condenses it. In pandas: <code class="ic">flower.resample("W").mean()</code>.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Idea 3 · Merging</div>
+    <h3>Matching kids to lunchboxes</h3>
+    <p>Two lists: the class list (name → favorite animal) and the lunch list (name → lunch). To answer <em>“what does the tiger kid eat?”</em> you need <strong>one</strong> list. So you match rows <strong>by name</strong>. If Maya isn't on the lunch list, her lunch box is just… empty. Pandas writes <code class="ic">NaN</code> in the empty box instead of making something up.</p>
+    <div class="anim" data-anim="tags">
+      <div class="anim-head"><span class="a-title">Match by name tag</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Same name → rows glue together. No match → the missing side becomes NaN.</div>
+    </div>
+    <p>And one more kid-sized idea that becomes a superpower later: <strong>“the last thing said still counts.”</strong> The ice-cream truck sign said <em>$3</em> at 1:00. You buy at 1:17. Nobody re-announced the price at 1:17 — the price is whatever the sign <em>last said before</em> you bought. Matching “my moment” to “the most recent thing before it” is called an <strong>as-of</strong> match. Remember the ice-cream truck; it comes back at every level.</p>
+    <div class="quiz" data-qid="q1-3">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Maya is on the class list but not the lunch list. After matching (keeping every kid in the class), Maya's lunch is…</p>
+      <div class="q-opts">
+        <button class="q-opt">She gets removed from the list</button>
+        <button class="q-opt">She gets the most common lunch</button>
+        <button class="q-opt" data-ok>An empty box — NaN</button>
+      </div>
+      <p class="q-expl">A <strong>left join</strong> keeps every row from the left list and fills unmatched columns with <code class="ic">NaN</code>. Pandas never invents data on a merge — missing means missing.</p>
+    </div>
+  </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Type it yourself</div>
+    <h3>Level 1 exercises</h3>
+    <p>Tiny but real pandas. Type your answer in the dark box (it saves automatically), tick “done”, and use <strong>Export answers</strong> at the bottom to send everything to your coach for grading.</p>
+
+    <div class="ex" data-exid="ex1-1" data-extitle="L1.1 Build the candy table">
+      <div class="ex-head"><span class="ex-tag">Exercise 1.1</span><span class="ex-title">Build the candy table</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Make the candy DataFrame from scratch with <code class="ic">pd.DataFrame</code> and a dict: columns <code class="ic">color</code> (red, green, red, blue), <code class="ic">yum</code> (5, 3, 4, 2).</p>
+      <textarea class="ex-code" placeholder="import pandas as pd&#10;candy = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">A dict of lists: keys become column names, lists become the column values. <code class="ic">pd.DataFrame({"color": [...], "yum": [...]})</code></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex1-2" data-extitle="L1.2 Count each pile">
+      <div class="ex-head"><span class="ex-tag">Exercise 1.2</span><span class="ex-title">Count each pile</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">One line: how many candies of each color? Then a second line: the <em>average yum</em> per color.</p>
+      <textarea class="ex-code" placeholder="# counts per color&#10;&#10;# average yum per color" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Pattern: <code class="ic">df.groupby(KEY)[COL].something()</code>. Counting a pile = <code class="ic">.size()</code> (or <code class="ic">value_counts()</code> on the column). Averaging = <code class="ic">.mean()</code>.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex1-3" data-extitle="L1.3 Lunch match">
+      <div class="ex-head"><span class="ex-tag">Exercise 1.3</span><span class="ex-title">Lunch match</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Given <code class="ic">kids</code> (columns name, animal) and <code class="ic">lunch</code> (columns name, food) — combine them keeping <strong>every kid</strong>, even kids with no lunch row.</p>
+      <textarea class="ex-code" placeholder="both = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">kids.merge(lunch, on="name", how=?)</code> — which <code class="ic">how</code> keeps all of the left table?</div></details>
+    </div>
+  </div>
+  <div class="next-cta"><button class="next-btn" data-goto="2">Level 2: your data now has a season schedule →</button></div>
+</section>
+
+<!-- ═══════════════════════ LEVEL 2 · ELI14 ═══════════════════════ -->
+<section class="level" id="lvl2" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Level 2 · Explain like I'm 14</div>
+    <h2>A whole season of games</h2>
+    <p>Same three ideas, now on data you'd actually keep: a season of basketball box scores. One row per game: <code class="ic">date, team, opponent, pts_for, pts_against, win</code>.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Time series</div>
+    <h3>Dates are a superpower column</h3>
+    <p>Read the file so pandas knows <code class="ic">date</code> is a real date, not a string that looks like one:</p>
+    <pre class="code">games = pd.read_csv("games.csv", parse_dates=["date"])</pre>
+    <p>Now the <code class="ic">.dt</code> accessor unlocks calendar questions with zero math:</p>
+    <pre class="code">games["date"].dt.month          # 1..12
+games["date"].dt.day_name()     # 'Friday'
+games[games["date"].dt.month == 1]   # January games</pre>
+    <p>And if you promote the date to the <strong>index</strong> (the name tags from Level 1), time becomes an address you can slice by:</p>
+    <pre class="code">g = games.set_index("date").sort_index()
+g.loc["2026-01"]                # everything in Jan 2026 — partial string magic
+g.loc["2026-01-10":"2026-02-01"]</pre>
+    <p><strong>Resample = the week jars from Level 1.</strong> With a datetime index, pandas can bucket rows by any calendar chunk:</p>
+    <pre class="code">g["pts_for"].resample("W").mean()    # avg points per week
+g["pts_for"].resample("ME").sum()    # total points per month</pre>
+    <div class="anim" data-anim="resample2">
+      <div class="anim-head"><span class="a-title">Games → weekly buckets → one bar each</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Each dot is a game's points. Fences drop at week boundaries; each bucket collapses to its mean. resample is groupby where the key is a time bucket.</div>
+    </div>
+    <p><strong>Rolling = a sliding jar.</strong> Instead of disjoint weeks, drag a window of the last 5 games along the season — that's a team's <em>form</em>:</p>
+    <pre class="code">g["form5"] = g["pts_for"].rolling(5).mean()</pre>
+    <div class="anim" data-anim="rolling2">
+      <div class="anim-head"><span class="a-title">The 5-game window slides</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">The amber window covers the last 5 dots; each step writes one smoothed value. Same split-apply-combine, but the “groups” overlap and slide.</div>
+    </div>
+    <div class="quiz" data-qid="q2-1">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">What's the real difference between <code class="ic">resample("W")</code> and <code class="ic">rolling(7)</code>?</p>
+      <div class="q-opts">
+        <button class="q-opt">resample is faster, otherwise identical</button>
+        <button class="q-opt" data-ok>resample uses disjoint calendar buckets (one row per week); rolling uses overlapping windows (one value per original row)</button>
+        <button class="q-opt">rolling only works on numbers, resample on anything</button>
+      </div>
+      <p class="q-expl">resample <strong>collapses</strong> to one row per bucket. rolling keeps the original shape — every row gets a stat of its trailing window. It's the agg-vs-transform split, in time form. Also: rolling(7) = 7 <em>rows</em>; rolling("7D") = 7 <em>days</em> — not the same if games are unevenly spaced!</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">GroupBy</div>
+    <h3>Per-team stats — and the fork in the road</h3>
+    <p>The candy piles are now teams. One line answers “average points per team”:</p>
+    <pre class="code">games.groupby("team")["pts_for"].mean()</pre>
+    <p>Want several stats at once with your own names? Named aggregation:</p>
+    <pre class="code">games.groupby("team").agg(
+    gp    = ("pts_for", "count"),
+    ppg   = ("pts_for", "mean"),
+    wins  = ("win", "sum"),
+)</pre>
+    <p>Here's the fork every groupby question hits. Ask: <strong>do I want one row per team, or a value for every game?</strong></p>
+    <ul>
+      <li><code class="ic">.agg</code> → <strong>collapse</strong>: one row per team (a leaderboard).</li>
+      <li><code class="ic">.transform</code> → <strong>broadcast</strong>: the team's stat copied onto each of its games — same shape as the original, perfect for making new columns.</li>
+    </ul>
+    <pre class="code"># each game vs the team's own season average
+games["team_avg"] = games.groupby("team")["pts_for"].transform("mean")
+games["hot"]      = games["pts_for"] &gt; games["team_avg"]</pre>
+    <div class="anim" data-anim="aggtrans">
+      <div class="anim-head"><span class="a-title">agg collapses · transform broadcasts</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Same split, same mean — the difference is the combine step: agg keeps one row per pile; transform sends the answer back to every original row.</div>
+    </div>
+    <div class="quiz" data-qid="q2-2">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">“Flag every game where a team scored 15+ over its own season average.” agg or transform?</p>
+      <div class="q-opts">
+        <button class="q-opt">agg — I need each team's average</button>
+        <button class="q-opt" data-ok>transform — I need the average sitting next to every game row to compare against</button>
+        <button class="q-opt">Neither, use a for-loop over teams</button>
+      </div>
+      <p class="q-expl">The output is per-<em>game</em> (a flag on every row), so the group stat must be broadcast back: <code class="ic">transform("mean")</code>, then a vectorized comparison. If the deliverable were a per-<em>team</em> table, agg. Say the shape of the answer out loud and the verb picks itself.</p>
+    </div>
+    <div class="quiz" data-qid="q2-3">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Quickest way to count games per team?</p>
+      <div class="q-opts">
+        <button class="q-opt">games.groupby("team").transform("count")</button>
+        <button class="q-opt" data-ok>games["team"].value_counts()  (or groupby("team").size())</button>
+        <button class="q-opt">len(games) / games["team"].nunique()</button>
+      </div>
+      <p class="q-expl"><code class="ic">value_counts()</code> is the one-liner for “how many rows per category”, sorted for free. transform would give you 720 repeated numbers; the division only works if every team played the same schedule.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Merging</div>
+    <h3>Joining the season to everything else</h3>
+    <p>Team info lives in a second table — <code class="ic">teams: team, coach, arena</code>. Exact merge, matching by key:</p>
+    <pre class="code">full = games.merge(teams, on="team", how="left")</pre>
+    <ul>
+      <li><code class="ic">how="left"</code> — keep every game; a team missing from <code class="ic">teams</code> gets NaN coach (Maya's lunchbox).</li>
+      <li><code class="ic">how="inner"</code> — keep only matches (games can silently disappear!).</li>
+      <li><code class="ic">how="outer"</code> — keep everything from both sides.</li>
+    </ul>
+    <p>Now the ice-cream truck grows up. <strong>Power rankings drop every Monday. What was each team's ranking on game day?</strong> A Thursday game shouldn't match Thursday's ranking (there isn't one) — it should match <em>the most recent Monday's</em>. Exact merge can't do that. <code class="ic">merge_asof</code> exists exactly for this:</p>
+    <pre class="code">games = games.sort_values("date")
+ranks = ranks.sort_values("date")     # both MUST be sorted by the time key
+
+with_rank = pd.merge_asof(
+    games, ranks,
+    on="date",            # the time key
+    by="team",            # match within team first
+    direction="backward", # most recent ranking AT OR BEFORE game day
+)</pre>
+    <div class="anim" data-anim="asof2">
+      <div class="anim-head"><span class="a-title">Each game reaches back to the latest ranking</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Squares = games, dots = Monday rankings. Each game scans backward and grabs the most recent ranking at-or-before it. That's direction="backward" — the default, and almost always what you want.</div>
+    </div>
+    <div class="quiz" data-qid="q2-4">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Why would <code class="ic">direction="forward"</code> be cheating for a prediction model?</p>
+      <div class="q-opts">
+        <button class="q-opt">It's slower to compute</button>
+        <button class="q-opt" data-ok>It attaches a ranking published AFTER the game — information from the future leaking into the past</button>
+        <button class="q-opt">It drops unmatched rows</button>
+      </div>
+      <p class="q-expl">Forward grabs the <em>next</em> ranking — which already knows the game's result. That's <strong>data leakage</strong>: your model looks brilliant in backtest and useless live. “backward” = only information that existed at that moment. This one idea is worth saying out loud in any interview.</p>
+    </div>
+  </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Type it yourself</div>
+    <h3>Level 2 exercises</h3>
+
+    <div class="ex" data-exid="ex2-1" data-extitle="L2.1 Weekly scoring">
+      <div class="ex-head"><span class="ex-tag">Exercise 2.1</span><span class="ex-title">Weekly scoring</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Starting from <code class="ic">games</code> (has a <code class="ic">date</code> column, already parsed): produce average <code class="ic">pts_for</code> per <strong>week</strong>. Two steps — get time into the index, then bucket it.</p>
+      <textarea class="ex-code" placeholder="weekly = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">set_index("date")</code> then <code class="ic">["pts_for"].resample("W").mean()</code>. resample needs time in the index (or use <code class="ic">on="date"</code>).</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex2-2" data-extitle="L2.2 Team table + hot games">
+      <div class="ex-head"><span class="ex-tag">Exercise 2.2</span><span class="ex-title">Team table + hot games</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">(a) One row per team: games played, points per game, win total — with those column names. (b) Add a boolean column <code class="ic">hot</code> to <code class="ic">games</code>: did the team beat its own season scoring average that night?</p>
+      <textarea class="ex-code" placeholder="# (a) leaderboard&#10;&#10;# (b) hot flag" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) named agg: <code class="ic">.agg(gp=("pts_for","count"), ...)</code>. (b) the fork: per-row output → <code class="ic">transform("mean")</code> then compare.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex2-3" data-extitle="L2.3 Ranking as of game day">
+      <div class="ex-head"><span class="ex-tag">Exercise 2.3</span><span class="ex-title">Ranking as of game day</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Attach each team's most recent published ranking to every game. <code class="ic">ranks</code> has columns <code class="ic">date, team, rank</code> (published Mondays). Don't forget the requirement merge_asof enforces before it will even run.</p>
+      <textarea class="ex-code" placeholder="with_rank = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Sort both by <code class="ic">date</code> first. Then <code class="ic">pd.merge_asof(games, ranks, on="date", by="team", direction="backward")</code>.</div></details>
+    </div>
+  </div>
+  <div class="next-cta"><button class="next-btn" data-goto="3">Level 3: the data becomes ticks and quotes →</button></div>
+</section>
+
+<!-- ═══════════════════════ LEVEL 3 · ANALYST ═══════════════════════ -->
+<section class="level" id="lvl3" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Level 3 · Explain like I do this for work</div>
+    <h2>Trades and quotes, on the clock</h2>
+    <p>Now the data is market microstructure: a <code class="ic">trades</code> table (ts, symbol, price, size) and a <code class="ic">quotes</code> table (ts, symbol, bid, ask). Everything from Levels 1–2 applies — the stakes and the argument lists grow.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Time series</div>
+    <h3>The DatetimeIndex, properly</h3>
+    <pre class="code">trades = pd.read_csv(
+    "trades.csv",
+    parse_dates=["ts"],              # strings → Timestamps at read time
+    dtype={"symbol": "category"},    # repeated strings → tiny ints
+).sort_values(["symbol", "ts"])</pre>
+    <p>Promote time to the index and you get addressing, slicing, and clock filters:</p>
+    <pre class="code">t = trades.set_index("ts").sort_index()
+t.loc["2026-06-22 09:30":"2026-06-22 10:00"]   # a slice of the morning
+t.between_time("09:30", "16:00")               # regular hours, any day</pre>
+    <p><strong>Downsampling ticks into bars.</strong> Nobody models raw ticks straight away — you build bars. <code class="ic">ohlc()</code> is a ready-made aggregation: first/max/min/last of each bucket:</p>
+    <pre class="code">bars = t.groupby("symbol", observed=True)["price"].resample("5min").ohlc()
+#                                  open    high     low   close</pre>
+    <div class="anim" data-anim="ohlc3">
+      <div class="anim-head"><span class="a-title">Ticks → one 5-minute OHLC bar</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">The bucket keeps four survivors: first tick (open), highest (high), lowest (low), last (close). Everything else is summarized away — that's downsampling with intent.</div>
+    </div>
+    <p><strong>Features over time — and the leakage rule.</strong> Rolling and EWM windows end <em>at</em> the current row, so “as of now” includes now. If the feature will predict something at time t, shift it:</p>
+    <pre class="code">bars["vol20"]  = bars["close"].pct_change().rolling(20).std()
+bars["ewm10"]  = bars["close"].ewm(span=10).mean()
+bars["feat"]   = bars["vol20"].shift(1)    # only yesterday's info predicts today</pre>
+    <div class="note">Chant it: <strong>shift · backward · split.</strong> shift(1) your rolling features; merge_asof <code class="ic">direction="backward"</code>; split train/test by time. Three doors leakage sneaks through, three locks.</div>
+    <div class="quiz" data-qid="q3-1">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text"><code class="ic">rolling(20)</code> vs <code class="ic">rolling("20min")</code> on tick data — what's the trap?</p>
+      <div class="q-opts">
+        <button class="q-opt">No difference if data is sorted</button>
+        <button class="q-opt" data-ok>20 = last 20 rows regardless of when they happened; "20min" = a true clock window. On irregular ticks, 20 rows might span 4 seconds or 4 hours</button>
+        <button class="q-opt">"20min" is deprecated</button>
+      </div>
+      <p class="q-expl">Tick arrivals are irregular — row-count windows stretch and shrink in wall-clock terms. Time-based windows (<code class="ic">rolling("20min")</code>, needs a datetime index) mean what they say. Pick the one that matches the sentence you'd say about the feature.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">GroupBy</div>
+    <h3>Two keys, two verbs, one Grouper</h3>
+    <p>Per-symbol VWAP — a collapse (agg) built from vectorized pieces:</p>
+    <pre class="code">trades["notional"] = trades["price"] * trades["size"]
+vwap = (trades.groupby("symbol", observed=True)
+              .agg(notional=("notional","sum"), volume=("size","sum")))
+vwap["vwap"] = vwap["notional"] / vwap["volume"]</pre>
+    <p>Per-symbol z-score of size — a broadcast (transform), because the answer belongs on every row:</p>
+    <pre class="code">g = trades.groupby("symbol", observed=True)["size"]
+trades["size_z"] = (trades["size"] - g.transform("mean")) / g.transform("std")</pre>
+    <p><strong>Group by a category AND a time bucket at once</strong> — this is the underrated tool. <code class="ic">pd.Grouper</code> lets a time bucket sit inside a normal groupby, no index gymnastics:</p>
+    <pre class="code">bars = trades.groupby(
+    ["symbol", pd.Grouper(key="ts", freq="5min")], observed=True
+).agg(open=("price","first"), high=("price","max"),
+      low=("price","min"),   close=("price","last"),
+      volume=("size","sum"))</pre>
+    <div class="note teal">That one pattern — <code class="ic">groupby([category, pd.Grouper(key=time, freq=...)])</code> with a named agg — builds almost any bar table in one pass. It's the workhorse of every market-data exercise.</div>
+    <div class="quiz" data-qid="q3-2">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Why does VWAP have to be sum(price×size)/sum(size) rather than a plain <code class="ic">mean()</code> of price?</p>
+      <div class="q-opts">
+        <button class="q-opt">It doesn't — mean of price is the same thing</button>
+        <button class="q-opt" data-ok>A 10,000-share trade should move the average 100× more than a 100-share trade — the mean treats them equally</button>
+        <button class="q-opt">Because price has NaNs</button>
+      </div>
+      <p class="q-expl">VWAP is a <em>weighted</em> mean, weights = size. Compute the pieces vectorized (notional column, two sums), divide once. Bonus habit: doing it via two <code class="ic">.agg</code> sums stays fast; a <code class="ic">.apply</code> with a lambda per group does not.</p>
+    </div>
+    <div class="quiz" data-qid="q3-3">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">You need each trade tagged with its symbol's total volume that day (to compute participation %). Verb?</p>
+      <div class="q-opts">
+        <button class="q-opt" data-ok>transform("sum") — per-row output, group stat broadcast back</button>
+        <button class="q-opt">agg then merge the result back on symbol</button>
+        <button class="q-opt">apply with a custom function</button>
+      </div>
+      <p class="q-expl">agg-then-merge <em>works</em> but is two steps and a join; <code class="ic">transform</code> is the built-in one-liner for exactly this shape. Save <code class="ic">apply</code> for when no built-in fits — it's a Python loop in disguise.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Merging</div>
+    <h3>The trade meets its quote</h3>
+    <p>Exact merges get defensive at this level — say what you expect, make pandas check it:</p>
+    <pre class="code">full = trades.merge(symbols_meta, on="symbol",
+                    how="left",
+                    validate="m:1",        # many trades → one meta row; raise if not
+                    indicator=True)        # adds _merge: both / left_only
+full["_merge"].value_counts()              # audit the join before trusting it</pre>
+    <p>Now the signature market-data move. A trade prints at 10:15:03.2 — <strong>what were the bid and ask at that instant?</strong> Quotes don't update on a schedule; the prevailing quote is the ice-cream sign: whatever was last posted. This is inexact, as-of matching:</p>
+    <pre class="code">trades = trades.sort_values("ts")
+quotes = quotes.sort_values("ts")          # sorted by the ON key — required
+
+taq = pd.merge_asof(
+    trades, quotes,
+    on="ts",                     # inexact time key
+    by="symbol",                 # exact match on symbol FIRST
+    direction="backward",        # most recent quote at-or-before the trade
+    tolerance=pd.Timedelta("5s"),# refuse stale quotes → NaN instead of lies
+)
+taq["spread"] = taq["ask"] - taq["bid"]
+taq["mid"]    = (taq["bid"] + taq["ask"]) / 2</pre>
+    <div class="anim" data-anim="asof3">
+      <div class="anim-head"><span class="a-title">merge_asof with by="symbol" — two lanes, no crossing</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Amber squares = trades, teal dots = quotes, one lane per symbol. Each trade reaches back to the latest quote in ITS OWN lane. A trade further back than the tolerance gets NaN — honest, not wrong.</div>
+    </div>
+    <div class="quiz" data-qid="q3-4">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">merge_asof raises <code class="ic">ValueError: left keys must be sorted</code>. What's the actual fix?</p>
+      <div class="q-opts">
+        <button class="q-opt">Pass sort=True to merge_asof</button>
+        <button class="q-opt" data-ok>sort_values("ts") on that table first — asof matching is a single ordered scan, sortedness is the contract</button>
+        <button class="q-opt">Use how="left" instead</button>
+      </div>
+      <p class="q-expl">There is no sort flag — the algorithm walks both tables once in time order (that's why it's fast), so it demands sorted inputs. NaNs in the key break sortedness too. The rhythm: <strong>sort both → merge_asof → audit the NaNs</strong>.</p>
+    </div>
+  </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Type it yourself</div>
+    <h3>Level 3 exercises</h3>
+
+    <div class="ex" data-exid="ex3-1" data-extitle="L3.1 One-pass bars">
+      <div class="ex-head"><span class="ex-tag">Exercise 3.1</span><span class="ex-title">One-pass bars</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">From <code class="ic">trades</code> (ts parsed, symbol category): build 5-minute bars per symbol — open/high/low/close of price plus volume (sum of size) — in a single groupby. Use the Grouper pattern.</p>
+      <textarea class="ex-code" placeholder="bars = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">groupby(["symbol", pd.Grouper(key="ts", freq="5min")], observed=True).agg(open=("price","first"), ...)</code></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex3-2" data-extitle="L3.2 Participation rate">
+      <div class="ex-head"><span class="ex-tag">Exercise 3.2</span><span class="ex-title">Participation rate</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Add a column <code class="ic">participation</code> to <code class="ic">trades</code>: each trade's size as a fraction of its symbol's total traded size. One verb does this — pick it and say why out loud.</p>
+      <textarea class="ex-code" placeholder="trades[&quot;participation&quot;] = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Per-row output → broadcast: <code class="ic">trades["size"] / trades.groupby("symbol", observed=True)["size"].transform("sum")</code></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex3-3" data-extitle="L3.3 Trade-at-quote">
+      <div class="ex-head"><span class="ex-tag">Exercise 3.3</span><span class="ex-title">Trade-at-quote</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Attach the prevailing quote to every trade (per symbol, no quotes older than 2 seconds), then compute <code class="ic">spread</code> and flag trades that printed <em>above the ask</em>. Include the prep steps merge_asof demands.</p>
+      <textarea class="ex-code" placeholder="# sort, merge_asof, spread, flag" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">sort both by ts → <code class="ic">pd.merge_asof(trades, quotes, on="ts", by="symbol", tolerance=pd.Timedelta("2s"))</code> → <code class="ic">taq["price"] &gt; taq["ask"]</code>.</div></details>
+    </div>
+  </div>
+  <div class="next-cta"><button class="next-btn" data-goto="4">Level 4: ninety million rows walk into a bar →</button></div>
+</section>
+
+<!-- ═══════════════════════ LEVEL 4 · EXPERT ═══════════════════════ -->
+<section class="level" id="lvl4" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Level 4 · Expert</div>
+    <h2>Ninety million rows walk into a bar</h2>
+    <p>Same three ideas. But now it's every tick for 500 symbols, the naive version doesn't fit in RAM, and being <em>right</em> includes being <em>fast, small, and audited</em>. This level is about handling heavy data with care — and downsampling it on purpose.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Discipline 1 · Load small, not everything</div>
+    <h3>Memory is won at read time</h3>
+    <pre class="code">df = pd.read_parquet(
+    "ticks.parquet",
+    columns=["ts","symbol","price","size"],          # never load what you won't use
+    filters=[("symbol","in",universe),
+             ("ts",">=", start)],                    # predicate pushdown: skip row groups on disk
+)
+df["symbol"] = df["symbol"].astype("category")       # 500 strings → int codes
+df["size"]   = df["size"].astype("int32")            # halve the ints
+df.info(memory_usage="deep")                         # always know your footprint</pre>
+    <ul>
+      <li><strong>category</strong> for any column with few unique strings — often a 10–20× shrink.</li>
+      <li><strong>float32 / int32</strong> where precision allows — half the bytes, double the cache hits.</li>
+      <li>Parquet over CSV: typed, compressed, column-selectable, filterable <em>before</em> RAM.</li>
+      <li>Still too big? Chunk it (<code class="ic">read_csv(..., chunksize=1_000_000)</code>): aggregate each chunk, combine the partials — a hand-rolled map-reduce. The trick: keep per-chunk <em>sums and counts</em>, never per-chunk means (means of means are wrong when chunk sizes differ).</li>
+    </ul>
+    <div class="quiz" data-qid="q4-1">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">A 40 GB tick file, you need daily volume for 3 of 500 symbols. Best first move?</p>
+      <div class="q-opts">
+        <button class="q-opt">read_csv the file and filter after loading</button>
+        <button class="q-opt" data-ok>Push the symbol filter and column selection into the read itself (parquet filters=/columns=, or chunked reads that keep only those symbols)</button>
+        <button class="q-opt">Load it on a bigger machine</button>
+      </div>
+      <p class="q-expl">The cheapest row is the one you never load. Predicate pushdown means the parquet reader skips whole row groups on disk — you touch ~0.6% of the data. “Filter after loading” already OOM'd. Naming this move calmly is exactly what a “my machine crashes” interview question wants.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Discipline 2 · Downsample with intent</div>
+    <h3>Resample is a scalpel, not a blender</h3>
+    <p>At scale you choose the coarsest granularity that still answers the question — and you control the bucket edges, because off-by-one-bucket bugs are silent:</p>
+    <pre class="code">bars = (df.set_index("ts")
+          .groupby("symbol", observed=True)["price"]
+          .resample("15min",
+                    label="right",    # stamp the bar with its END time...
+                    closed="right")   # ...and own the boundary tick
+          .ohlc())</pre>
+    <ul>
+      <li><code class="ic">label</code>/<code class="ic">closed</code>: does the 09:30–09:45 bar get stamped 09:30 or 09:45, and which edge owns a tick at exactly 09:45? Financial convention is usually <strong>right/right</strong> — a bar is named for when it <em>completes</em>. Mislabeling shifts every feature one bar into the future: silent leakage.</li>
+      <li><code class="ic">origin="start_day"</code> anchors buckets to midnight so 15-min bars land on :00/:15/:30/:45 regardless of when trading started.</li>
+      <li>Upsampling is the reverse trap: <code class="ic">resample("1s").ffill()</code> manufactures rows. Fine for alignment, but never compute “average price” from ffilled rows — you're averaging your own echo.</li>
+      <li>One pass, many stats: give resample/groupby a <strong>named agg</strong> instead of calling it five times. Each built-in agg is a fused, C-speed reduction; five separate calls = five scans.</li>
+    </ul>
+    <div class="quiz" data-qid="q4-2">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Your 15-min bars use label="left". Feature = bar close, target = next bar's return. What just happened?</p>
+      <div class="q-opts">
+        <button class="q-opt">Nothing — labels are cosmetic</button>
+        <button class="q-opt" data-ok>Each bar's stats are stamped with the bucket's START, so “the 09:30 close” actually happened at 09:45 — your features are timestamped 15 minutes before they existed. Leakage.</button>
+        <button class="q-opt">The bars have gaps</button>
+      </div>
+      <p class="q-expl">Labels decide what “as of 09:30” means downstream — in the merge_asof, in the train/test split, everywhere. Convention: <strong>label the bar with its close time</strong> (label="right", closed="right"), then a backward asof can never see inside an unfinished bar.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Discipline 3 · GroupBy at scale</div>
+    <h3>Stay on the C path</h3>
+    <pre class="code">g = df.groupby("symbol", observed=True, sort=False)
+
+daily = df.groupby(["symbol", df["ts"].dt.normalize()],
+                   observed=True).agg(vol=("size","sum"))   # built-in agg: C speed
+
+df["ret"] = g["price"].transform("pct_change")              # per-group, no loop</pre>
+    <ul>
+      <li><code class="ic">observed=True</code> on categorical keys — otherwise pandas materializes every <em>possible</em> category combination: 500 symbols × 500 dates of empty rows. (It's the default in pandas 3.x, but say it; it shows you've been burned.)</li>
+      <li><code class="ic">sort=False</code> skips sorting group keys you don't need sorted.</li>
+      <li>The performance ladder: <strong>vectorized column math &gt; built-in agg/transform ("mean") &gt; apply(lambda)</strong>. <code class="ic">apply</code> calls Python once per group — 500 groups is fine, 5 million groups is a coffee break. Before writing apply, ask: can I compute pieces as columns first (the VWAP trick), then agg the pieces?</li>
+      <li>Repeated groupbys on the same key? Build <code class="ic">g</code> once and reuse it.</li>
+    </ul>
+    <div class="quiz" data-qid="q4-3">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Per-symbol daily VWAP on 90M rows. Which shape stays fast?</p>
+      <div class="q-opts">
+        <button class="q-opt">groupby(["symbol","day"]).apply(lambda g: (g.price*g.size).sum()/g.size.sum())</button>
+        <button class="q-opt" data-ok>df["notional"] = price*size once, vectorized; then one named agg summing notional and size; divide the two columns</button>
+        <button class="q-opt">A for-loop over symbols with df[df.symbol==s]</button>
+      </div>
+      <p class="q-expl">Same math, ~100× gap. The apply/lambda runs Python per group; the loop rescans the frame per symbol. Compute-pieces-then-agg keeps every step a single C-speed pass. This exact question is the classic “make it faster” follow-up.</p>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Discipline 4 · merge_asof at scale</div>
+    <h3>Why sorted, really — the two-pointer walk</h3>
+    <p>merge_asof isn't “a merge with vibes.” It's a <strong>single simultaneous walk down two sorted tables</strong> — one pointer each, never backing up. That's O(n+m) for any size, and it's exactly why unsorted input is a hard error, not a warning:</p>
+    <div class="anim" data-anim="twoptr">
+      <div class="anim-head"><span class="a-title">One pass, two pointers, zero lookups</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">The quote pointer only ever moves right. Each trade takes the last quote the pointer passed. 90M trades × 90M quotes = one linear scan, not a search per trade — but only because both are sorted.</div>
+    </div>
+    <p>The production checklist around it:</p>
+    <pre class="code">for df_ in (trades, quotes):
+    assert df_["ts"].is_monotonic_increasing, "sort before asof"
+    assert df_["ts"].notna().all(),           "NaT breaks ordering"
+
+taq = pd.merge_asof(trades, quotes, on="ts", by="symbol",
+                    direction="backward",
+                    tolerance=pd.Timedelta("5s"),
+                    allow_exact_matches=False)   # quote stamped AT the trade's
+                                                 # instant: did it exist "before"?
+taq["bid"].isna().mean()                         # audit: % refused as stale</pre>
+    <ul>
+      <li><code class="ic">tolerance</code> converts “stale but technically previous” into honest NaN. Always report the refusal rate.</li>
+      <li><code class="ic">allow_exact_matches=False</code> is the paranoid leakage setting: a quote with the identical timestamp may not have been visible when the trade fired. Know the flag, mention the ambiguity.</li>
+      <li>Duplicate timestamps on the right side? The <em>last</em> one wins — dedupe deliberately (<code class="ic">quotes.drop_duplicates(["symbol","ts"], keep="last")</code>), don't let it happen to you.</li>
+      <li>Exact merges at scale: <code class="ic">validate="m:1"</code> is a safety net against the many-to-many explosion — a dup key on both sides multiplies rows and eats RAM before you notice. Filter (rows AND columns) <em>before</em> joining, not after.</li>
+    </ul>
+    <div class="quiz" data-qid="q4-4">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">After an asof join, 38% of trades have NaN quotes. First reaction?</p>
+      <div class="q-opts">
+        <button class="q-opt">ffill the NaNs — problem solved</button>
+        <button class="q-opt">Loosen tolerance until NaNs go away</button>
+        <button class="q-opt" data-ok>Investigate: which symbols/times? Probably a by= mismatch (dtype/case), a tz mismatch, or quotes genuinely missing for part of the tape. The NaN rate is a data-quality finding, not a nuisance.</button>
+      </div>
+      <p class="q-expl">A huge refusal rate is the join <em>telling you something</em> — e.g. symbol "AAPL" vs "aapl ", tz-aware vs naive timestamps, or a vendor gap. Papering over it with ffill/looser tolerance bakes a lie into every downstream number. Diagnose, quantify, then decide.</p>
+    </div>
+  </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Type it yourself</div>
+    <h3>Level 4 exercises — the boss fight</h3>
+
+    <div class="ex" data-exid="ex4-1" data-extitle="L4.1 Lean ingest + 15-min bars">
+      <div class="ex-head"><span class="ex-tag">Exercise 4.1</span><span class="ex-title">Lean ingest + 15-min bars</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">A parquet of 1-minute prices (ts, stock, price, volume) is too big to load whole. Write the ingest for just stocks "a","b","c" and only the columns you need, then one-pass 15-min bars per stock: OHLC of price + volume sum, stamped with bar END time.</p>
+      <textarea class="ex-code" placeholder="# read_parquet with columns= and filters=&#10;# groupby + Grouper/resample with label/closed&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">read_parquet(columns=[...], filters=[("stock","in",["a","b","c"])]) → astype("category") → groupby(["stock", pd.Grouper(key="ts", freq="15min", label="right", closed="right")], observed=True).agg(...)</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex4-2" data-extitle="L4.2 Leakage-safe vol feature">
+      <div class="ex-head"><span class="ex-tag">Exercise 4.2</span><span class="ex-title">Leakage-safe vol feature</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">On those bars: per-stock log returns, a 20-bar rolling std, then make it a feature usable at prediction time. All per-group, no loops — and name the leakage lock you applied.</p>
+      <textarea class="ex-code" placeholder="# log returns per stock&#10;# rolling std per stock&#10;# the lock&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">ret = np.log(close).groupby(level="stock").diff() (or transform); vol = per-group rolling(20).std(); feature = vol.groupby(level="stock").shift(1). The lock is shift — window ends AT the row.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex4-3" data-extitle="L4.3 Audited asof join">
+      <div class="ex-head"><span class="ex-tag">Exercise 4.3</span><span class="ex-title">Audited asof join</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Full production trade↔quote join: pre-flight asserts, dedupe duplicate quote timestamps, backward asof per symbol with a 5s tolerance, then print the % of trades with no quote and the median spread by symbol. Write it like someone will run it at 3am.</p>
+      <textarea class="ex-code" placeholder="# asserts → dedupe → merge_asof → audit prints&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">is_monotonic_increasing asserts; drop_duplicates(["symbol","ts"], keep="last"); merge_asof(..., by="symbol", tolerance=...); taq["bid"].isna().mean(); taq.groupby("symbol", observed=True)["spread"].median().</div></details>
+    </div>
+
+    <div class="note"><strong>Graduation test.</strong> Close this page. In an empty notebook, from memory: ingest lean → build labeled bars → one leakage-safe feature → audited asof join → two printed audit numbers. If you can type that cold, there is nothing in the three pandas guides that can surprise you.</div>
+  </div>
+</section>
+
+</main>
+
+<div class="export-bar"><button class="export-btn" id="exportBtn">⬆ Export answers for grading</button></div>
+<div class="toast" id="toast">Copied — paste to your coach</div>
+<div class="export-fallback" id="exportFb">
+  <strong>Copy this and paste it to your coach:</strong>
+  <textarea id="exportTa" spellcheck="false"></textarea>
+  <button class="next-btn" id="exportClose">Close</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r)=>(r||document).querySelector(s), $$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep=ms=>new Promise(r=>setTimeout(r,RM?10:ms));
+const store={
+  get:k=>{try{return localStorage.getItem('pm.'+k)}catch(e){return null}},
+  set:(k,v)=>{try{localStorage.setItem('pm.'+k,v)}catch(e){}}
+};
+
+/* ── theme ── */
+$('#themeBtn').addEventListener('click',()=>{
+  const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=next;store.set('theme',next);
+});
+if(store.get('theme'))document.documentElement.dataset.theme=store.get('theme');
+
+/* ── tabs ── */
+const tabs=$$('.tab');
+function showLvl(n){
+  tabs.forEach(t=>t.classList.toggle('on',t.dataset.lvl==n));
+  [1,2,3,4].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
+  window.scrollTo(0,0);store.set('lvl',n);
+}
+tabs.forEach(t=>t.addEventListener('click',()=>showLvl(t.dataset.lvl)));
+$$('.next-btn[data-goto]').forEach(b=>b.addEventListener('click',()=>showLvl(b.dataset.goto)));
+
+/* ── quizzes ── */
+$$('.quiz').forEach(q=>{
+  const qid=q.dataset.qid, opts=$$('.q-opt',q);
+  function finish(chosen){
+    q.classList.add('done');
+    opts.forEach(o=>{if(o.hasAttribute('data-ok'))o.classList.add('right')});
+    if(chosen&&!chosen.hasAttribute('data-ok'))chosen.classList.add('wrong');
+    updateProgress();
+  }
+  if(store.get('quiz.'+qid)!==null)finish(null);
+  opts.forEach(o=>o.addEventListener('click',()=>{
+    if(q.classList.contains('done'))return;
+    store.set('quiz.'+qid,o.hasAttribute('data-ok')?'1':'0');
+    finish(o);
+  }));
+});
+
+/* ── exercises ── */
+$$('.ex').forEach(ex=>{
+  const id=ex.dataset.exid, ta=$('.ex-code',ex), done=$('.ex-done',ex);
+  const sc=store.get('ex.'+id+'.code'); if(sc)ta.value=sc;
+  if(store.get('ex.'+id+'.done')==='1')done.checked=true;
+  ta.addEventListener('input',()=>store.set('ex.'+id+'.code',ta.value));
+  done.addEventListener('change',()=>{store.set('ex.'+id+'.done',done.checked?'1':'0');updateProgress()});
+});
+
+/* ── progress chips ── */
+function updateProgress(){
+  [1,2,3,4].forEach(n=>{
+    const sec=$('#lvl'+n), qs=$$('.quiz',sec), exs=$$('.ex',sec);
+    const done=qs.filter(q=>q.classList.contains('done')).length+exs.filter(e=>$('.ex-done',e).checked).length;
+    $('[data-prog="'+n+'"]').textContent=done+'/'+(qs.length+exs.length);
+  });
+}
+updateProgress();
+
+/* ── syntax highlight ── */
+$$('pre.code').forEach(p=>{
+  const esc=p.textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  p.innerHTML=esc.replace(/(#[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\b(\d[\w.]*)\b|\b(import|from|as|for|in|def|return|lambda|True|False|None|assert|with|if|elif|else|not|and|or)\b/g,
+    function(m,com,str,num,kw){
+      if(com)return '<span class="com">'+m+'</span>';
+      if(str)return '<span class="str">'+m+'</span>';
+      if(num)return '<span class="num">'+m+'</span>';
+      return '<span class="kw">'+m+'</span>';
+    });
+});
+
+/* ── export ── */
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+$('#exportBtn').addEventListener('click',async()=>{
+  const lines=['# Pandas Mastery — my typed answers',''];
+  $$('.ex').forEach(ex=>{
+    const code=$('.ex-code',ex).value.trim();
+    if(!code)return;
+    lines.push('## '+ex.dataset.extitle,
+      '_'+$('.ex-prompt',ex).textContent.trim()+'_','',
+      '```python',code,'```','');
+  });
+  if(lines.length<3){toast('Nothing typed yet — fill an exercise first');return}
+  const md=lines.join('\n');
+  try{await navigator.clipboard.writeText(md);toast('Copied — paste to your coach')}
+  catch(e){$('#exportTa').value=md;$('#exportFb').classList.add('show')}
+});
+$('#exportClose').addEventListener('click',()=>$('#exportFb').classList.remove('show'));
+
+/* ── animation helpers ── */
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function chip(label,color){return el('span','dchip',(color?'<span class="dot" style="background:'+color+'"></span>':'')+label)}
+async function fly(node,toParent,dur){
+  dur=dur||500;
+  const a=node.getBoundingClientRect();
+  toParent.appendChild(node);
+  if(RM)return;
+  const b=node.getBoundingClientRect();
+  node.style.transition='none';
+  node.style.transform='translate('+(a.left-b.left)+'px,'+(a.top-b.top)+'px)';
+  node.getBoundingClientRect();
+  node.style.transition='transform '+dur+'ms cubic-bezier(.2,.7,.2,1)';
+  node.style.transform='';
+  await sleep(dur);
+  node.style.transition='';
+}
+
+/* generic: chips fly into buckets, buckets aggregate, optional transform broadcast */
+function bucketAnim(stage,cfg){
+  stage.innerHTML='';
+  const src=el('div','chip-row');stage.appendChild(src);
+  const chips=cfg.items.map(it=>{const c=chip(it.label,it.color);src.appendChild(c);return c});
+  const brow=el('div','');brow.style.cssText='display:flex;gap:.5rem;margin-top:.9rem';
+  stage.appendChild(brow);
+  const buckets={};
+  cfg.buckets.forEach(b=>{
+    const bx=el('div','bucket','<div class="b-label">'+(b.dot?'<span class="dot" style="background:'+b.dot+';width:.5rem;height:.5rem;border-radius:99px"></span>':'')+b.label+'</div><div class="b-body"></div><div class="b-result"></div>');
+    brow.appendChild(bx);buckets[b.key]=bx;
+  });
+  let ghosts=[];
+  if(cfg.transform){
+    stage.appendChild(el('div','tbl-cap','.transform — the answer returns to every original row'));
+    const strip=el('div','result-strip');stage.appendChild(strip);
+    ghosts=cfg.items.map(it=>{const g=chip(it.label+' · ?',it.color);g.classList.add('ghost');strip.appendChild(g);return g});
+  }
+  const groupVal=key=>cfg.result(cfg.items.filter(x=>x.group===key));
+  return async function(){
+    for(let i=0;i<cfg.items.length;i++){
+      await fly(chips[i],$('.b-body',buckets[cfg.items[i].group]),420);
+    }
+    await sleep(150);
+    for(const b of cfg.buckets){
+      const bx=buckets[b.key];bx.classList.add('lit');
+      const r=$('.b-result',bx);r.textContent=groupVal(b.key);r.classList.add('show');
+      await sleep(380);
+    }
+    for(let i=0;i<ghosts.length;i++){
+      const it=cfg.items[i];
+      ghosts[i].classList.remove('ghost');
+      ghosts[i].innerHTML=(it.color?'<span class="dot" style="background:'+it.color+'"></span>':'')+it.label+' · '+groupVal(it.group);
+      await sleep(140);
+    }
+  };
+}
+
+const BUILDERS={};
+const RED='#C9524B',GRN='#4F9D5D',BLU='#4A7FB5',AMB='var(--accent)',TEA='var(--teal)';
+
+BUILDERS.candy=stage=>bucketAnim(stage,{
+  items:[
+    {label:'gummy·5',group:'red',color:RED},{label:'gummy·3',group:'green',color:GRN},
+    {label:'choc·4',group:'red',color:RED},{label:'gummy·2',group:'blue',color:BLU},
+    {label:'gummy·5',group:'red',color:RED},{label:'choc·4',group:'green',color:GRN}],
+  buckets:[{key:'red',label:'red pile',dot:RED},{key:'green',label:'green pile',dot:GRN},{key:'blue',label:'blue pile',dot:BLU}],
+  result:m=>'count = '+m.length
+});
+
+BUILDERS.jars=stage=>bucketAnim(stage,{
+  items:Array.from({length:14},(_,i)=>({label:'d'+(i+1)+'·'+(10+i),v:10+i,group:i<7?'w1':'w2'})),
+  buckets:[{key:'w1',label:'week 1 jar'},{key:'w2',label:'week 2 jar'}],
+  result:m=>'mean = '+(m.reduce((s,x)=>s+x.v,0)/m.length).toFixed(1)+'cm'
+});
+
+BUILDERS.aggtrans=stage=>bucketAnim(stage,{
+  items:[
+    {label:'HAW 102',v:102,group:'HAW',color:AMB},{label:'LIO 95',v:95,group:'LIO',color:TEA},
+    {label:'HAW 88',v:88,group:'HAW',color:AMB},{label:'BEA 110',v:110,group:'BEA',color:BLU},
+    {label:'LIO 99',v:99,group:'LIO',color:TEA},{label:'HAW 95',v:95,group:'HAW',color:AMB}],
+  buckets:[{key:'HAW',label:'HAW',dot:AMB},{key:'LIO',label:'LIO',dot:TEA},{key:'BEA',label:'BEA',dot:BLU}],
+  result:m=>'mean = '+(m.reduce((s,x)=>s+x.v,0)/m.length).toFixed(1),
+  transform:true
+});
+
+BUILDERS.tags=stage=>{
+  stage.innerHTML='';
+  const kids=[['Ava','tiger'],['Ben','shark'],['Maya','owl']];
+  const lunch=[['Ava','pizza'],['Ben','pasta'],['Sam','soup']];
+  const wrap=el('div','');wrap.style.cssText='display:flex;gap:1.4rem;flex-wrap:wrap';
+  const c1=el('div','','<div class="tbl-cap">kids</div>'),c2=el('div','','<div class="tbl-cap">lunch</div>');
+  const mk=(arr,parent,color)=>arr.map(pair=>{const c=chip(pair[0]+' · '+pair[1],color);c.style.cssText='display:flex;margin-bottom:.3rem';parent.appendChild(c);return c});
+  const k=mk(kids,c1,AMB),l=mk(lunch,c2,TEA);
+  wrap.append(c1,c2);stage.appendChild(wrap);
+  stage.appendChild(el('div','tbl-cap','kids.merge(lunch, on="name", how="left")'));
+  const strip=el('div','result-strip');stage.appendChild(strip);
+  return async()=>{
+    strip.innerHTML='';
+    for(let i=0;i<kids.length;i++){
+      k[i].style.outline='2px solid var(--accent)';
+      const j=lunch.findIndex(r=>r[0]===kids[i][0]);
+      if(j>=0)l[j].style.outline='2px solid var(--teal)';
+      await sleep(520);
+      const merged=chip(kids[i][0]+' · '+kids[i][1]+' · '+(j>=0?lunch[j][1]:'NaN'));
+      if(j<0){merged.style.borderColor='var(--bad)';merged.style.color='var(--bad)'}
+      strip.appendChild(merged);
+      k[i].style.outline='';if(j>=0)l[j].style.outline='';
+      await sleep(230);
+    }
+  };
+};
+
+BUILDERS.rolling2=stage=>{
+  stage.innerHTML='';
+  const vals=[98,102,95,110,99,105,101,93,108,104];
+  const sc=el('div','scroll');
+  const row=el('div','');row.style.cssText='position:relative;display:inline-flex;gap:.3rem;padding:.35rem 0';
+  const cells=vals.map(v=>{const c=el('span','dchip',String(v));row.appendChild(c);return c});
+  const win=el('div','');win.style.cssText='position:absolute;top:0;bottom:0;border:2px solid var(--accent);background:var(--accent-soft);opacity:0;border-radius:10px;transition:left .45s,width .45s,opacity .3s;left:0;width:0;pointer-events:none';
+  row.appendChild(win);sc.appendChild(row);stage.appendChild(sc);
+  stage.appendChild(el('div','tbl-cap','rolling(5).mean()'));
+  const strip=el('div','result-strip');stage.appendChild(strip);
+  return async()=>{
+    strip.innerHTML='';win.style.opacity='.55';
+    for(let i=0;i<vals.length;i++){
+      if(i<4){const c=chip('NaN');c.style.opacity=.4;strip.appendChild(c);await sleep(90);continue}
+      const a=cells[i-4],b=cells[i];
+      win.style.left=(a.offsetLeft-3)+'px';
+      win.style.width=(b.offsetLeft+b.offsetWidth-a.offsetLeft+6)+'px';
+      await sleep(470);
+      strip.appendChild(chip((vals.slice(i-4,i+1).reduce((s,x)=>s+x,0)/5).toFixed(1)));
+    }
+  };
+};
+
+BUILDERS.resample2=stage=>{
+  stage.innerHTML='';
+  const games=[[3,101],[9,95],[15,110],[21,99],[28,104],[34,93],[41,108],[47,100],[53,97],[59,105],[66,99],[72,112],[78,96],[84,103],[91,107],[97,94]];
+  const box=el('div','');box.style.cssText='position:relative;height:7.6rem';
+  const lane=el('div','lane','<span class="l-label">games — pts_for</span><span class="l-track"></span>');
+  const ticks=games.map(g=>{const t=el('span','tick','<span class="t-val">'+g[1]+'</span><span class="t-dot"></span>');t.style.left=g[0]+'%';lane.appendChild(t);return t});
+  box.appendChild(lane);
+  const fences=[25,50,75].map(p=>{const f=el('div','');f.style.cssText='position:absolute;top:.4rem;height:4.4rem;left:'+p+'%;border-left:2px dashed var(--accent);opacity:0;transition:opacity .4s';box.appendChild(f);return f});
+  const spans=[[0,25],[25,50],[50,75],[75,100]];
+  const res=spans.map((sp,i)=>{const c=el('span','dchip','W'+(i+1)+'?');c.style.cssText='position:absolute;top:5.3rem;left:'+((sp[0]+sp[1])/2)+'%;transform:translateX(-50%);opacity:0;transition:opacity .4s';box.appendChild(c);return c});
+  stage.appendChild(box);
+  return async()=>{
+    for(const f of fences){f.style.opacity=1;await sleep(260)}
+    for(let i=0;i<spans.length;i++){
+      const m=games.map((g,gi)=>({g,gi})).filter(o=>o.g[0]>=spans[i][0]&&o.g[0]<spans[i][1]);
+      m.forEach(o=>ticks[o.gi].classList.add('hit'));
+      await sleep(430);
+      const mean=m.reduce((s,o)=>s+o.g[1],0)/m.length;
+      res[i].textContent='W'+(i+1)+' mean='+mean.toFixed(1);res[i].style.opacity=1;
+      m.forEach(o=>ticks[o.gi].classList.remove('hit'));
+      await sleep(240);
+    }
+  };
+};
+
+function asofAnim(stage,groups,tolPct,fmt){
+  stage.innerHTML='';
+  const box=el('div','');box.style.cssText='position:relative';
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('class','wire');
+  const allT=[],allQ=[];
+  groups.forEach((g,gi)=>{
+    const lt=el('div','lane','<span class="l-label">'+g.tlabel+'</span><span class="l-track"></span>');
+    g.trades.forEach(tr=>{const t=el('span','tick trade','<span class="t-val">'+tr[1]+'</span><span class="t-dot"></span><span class="t-time">'+(tr[2]||'')+'</span>');t.style.left=tr[0]+'%';lt.appendChild(t);allT.push({p:tr[0],v:tr[1],el:t,g:gi})});
+    const lq=el('div','lane','<span class="l-label">'+g.qlabel+'</span><span class="l-track"></span>');
+    g.quotes.forEach(q=>{const e=el('span','tick','<span class="t-val">'+q[1]+'</span><span class="t-dot"></span><span class="t-time">'+(q[2]||'')+'</span>');e.style.left=q[0]+'%';lq.appendChild(e);allQ.push({p:q[0],v:q[1],el:e,g:gi})});
+    box.append(lt,lq);
+  });
+  box.appendChild(svg);
+  stage.appendChild(box);
+  const strip=el('div','result-strip');stage.appendChild(strip);
+  return async()=>{
+    strip.innerHTML='';$$('path',svg).forEach(p=>p.remove());
+    const ts=allT.slice().sort((a,b)=>a.p-b.p);
+    for(const t of ts){
+      t.el.classList.add('hit');
+      const cands=allQ.filter(q=>q.g===t.g&&q.p<=t.p&&(tolPct==null||t.p-q.p<=tolPct));
+      const q=cands.length?cands[cands.length-1]:null;
+      await sleep(320);
+      if(q){
+        q.el.classList.add('hit');
+        const br=box.getBoundingClientRect(),tr=t.el.getBoundingClientRect(),qr=q.el.getBoundingClientRect();
+        const x1=tr.left+tr.width/2-br.left,y1=tr.bottom-br.top-6,x2=qr.left+qr.width/2-br.left,y2=qr.top-br.top+4;
+        const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d','M'+x1+','+y1+' C'+x1+','+((y1+y2)/2)+' '+x2+','+((y1+y2)/2)+' '+x2+','+y2);
+        svg.appendChild(path);
+        requestAnimationFrame(()=>path.classList.add('show'));
+        strip.appendChild(chip(fmt(t,q)));
+      }else{
+        t.el.classList.add('dim');
+        const c=chip(fmt(t,null));c.style.borderColor='var(--bad)';c.style.color='var(--bad)';
+        strip.appendChild(c);
+      }
+      await sleep(520);
+      t.el.classList.remove('hit');if(q)q.el.classList.remove('hit');
+    }
+  };
+}
+
+BUILDERS.asof2=stage=>asofAnim(stage,[
+  {tlabel:'games',qlabel:'rankings (Mondays)',
+   trades:[[22,'Thu'],[50,'Sat'],[81,'Wed']],
+   quotes:[[6,'#12'],[36,'#9'],[68,'#7']]}
+],null,(t,q)=>t.v+' game ← rank '+(q?q.v:'NaN'));
+
+BUILDERS.asof3=stage=>asofAnim(stage,[
+  {tlabel:'AAA trades',qlabel:'AAA quotes',
+   trades:[[24,'99.1'],[58,'99.4'],[90,'99.0']],
+   quotes:[[8,'99.0/99.2'],[46,'99.2/99.5'],[84,'98.9/99.1']]},
+  {tlabel:'BBB trades',qlabel:'BBB quotes',
+   trades:[[36,'201.5'],[76,'202.1']],
+   quotes:[[20,'201.3/201.6'],[30,'201.4/201.7']]}
+],28,(t,q)=>t.v+' ← '+(q?q.v:'NaN (stale)'));
+
+BUILDERS.ohlc3=stage=>{
+  stage.innerHTML='';
+  const ticks=[[4,100.2],[16,100.9],[28,100.5],[40,101.4],[52,100.1],[64,99.8],[76,100.6],[90,100.4]];
+  const box=el('div','');box.style.cssText='position:relative;height:4.4rem';
+  const lane=el('div','lane','<span class="l-label">ticks 09:30–09:35</span><span class="l-track"></span>');
+  const tels=ticks.map(t=>{const e=el('span','tick','<span class="t-val">'+t[1]+'</span><span class="t-dot"></span>');e.style.left=t[0]+'%';lane.appendChild(e);return e});
+  box.appendChild(lane);stage.appendChild(box);
+  const strip=el('div','result-strip');stage.appendChild(strip);
+  return async()=>{
+    strip.innerHTML='';
+    const roles=[['open',0],['high',3],['low',5],['close',7]];
+    for(const r of roles){
+      tels.forEach((t,i)=>t.classList.toggle('hit',i===r[1]));
+      await sleep(560);
+      strip.appendChild(chip(r[0]+' = '+ticks[r[1]][1]));
+    }
+    tels.forEach(t=>t.classList.remove('hit'));
+  };
+};
+
+BUILDERS.twoptr=stage=>{
+  stage.innerHTML='';
+  const trades=[[12,'T1'],[36,'T2'],[60,'T3'],[88,'T4']];
+  const quotes=[[5,'Q1'],[24,'Q2'],[32,'Q3'],[54,'Q4'],[72,'Q5'],[93,'Q6']];
+  const box=el('div','');box.style.cssText='position:relative;height:8rem';
+  const lt=el('div','lane','<span class="l-label">trades (sorted)</span><span class="l-track"></span>');
+  lt.style.cssText='position:absolute;top:.2rem;left:0;right:0';
+  const tEls=trades.map(t=>{const e=el('span','tick trade','<span class="t-val">'+t[1]+'</span><span class="t-dot"></span>');e.style.left=t[0]+'%';lt.appendChild(e);return e});
+  const lq=el('div','lane','<span class="l-label">quotes (sorted)</span><span class="l-track"></span>');
+  lq.style.cssText='position:absolute;top:3.9rem;left:0;right:0';
+  const qEls=quotes.map(q=>{const e=el('span','tick','<span class="t-val">'+q[1]+'</span><span class="t-dot"></span>');e.style.left=q[0]+'%';lq.appendChild(e);return e});
+  const pt=el('div',''),pq=el('div','');
+  [pt,pq].forEach(x=>x.style.cssText='position:absolute;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid var(--accent);transition:left .45s;transform:translateX(-50%)');
+  pt.style.top='2.5rem';pt.style.left=trades[0][0]+'%';
+  pq.style.top='6.2rem';pq.style.left='0%';
+  box.append(lt,lq,pt,pq);stage.appendChild(box);
+  const strip=el('div','result-strip');stage.appendChild(strip);
+  return async()=>{
+    strip.innerHTML='';
+    let qi=-1;
+    for(let ti=0;ti<trades.length;ti++){
+      pt.style.left=trades[ti][0]+'%';tEls[ti].classList.add('hit');
+      await sleep(430);
+      while(qi+1<quotes.length&&quotes[qi+1][0]<=trades[ti][0]){
+        qi++;pq.style.left=quotes[qi][0]+'%';
+        qEls.forEach((q,i)=>q.classList.toggle('hit',i===qi));
+        await sleep(360);
+      }
+      strip.appendChild(chip(trades[ti][1]+' ← '+(qi>=0?quotes[qi][1]:'NaN')));
+      tEls[ti].classList.remove('hit');
+      await sleep(200);
+    }
+    qEls.forEach(q=>q.classList.remove('hit'));
+  };
+};
+
+/* wire up animation cards */
+$$('.anim').forEach(a=>{
+  const build=BUILDERS[a.dataset.anim];
+  if(!build)return;
+  const stage=$('.stage',a),btn=$('.btn-play',a);
+  let running=false;
+  build(stage);
+  btn.addEventListener('click',async()=>{
+    if(running)return;
+    running=true;btn.disabled=true;
+    try{await build(stage)()}finally{
+      btn.disabled=false;btn.textContent='↻ Replay';running=false;
+    }
+  });
+});
+
+/* restore last level */
+if(store.get('lvl'))showLvl(store.get('lvl'));
+})();
+</script>
