@@ -794,7 +794,17 @@ taq["bid"].isna().mean()                         # audit: % refused as stale</pr
   <div class="lvl-hero">
     <div class="eyebrow">Level 5 · The Gauntlet</div>
     <h2>Drills for the bugs you actually write</h2>
-    <p>Ten short reps, each targeting a real miss pattern: dict colons, methods-that-return-new, mask vs filter, sum vs count, and on= vs by= three times in three disguises. Type from memory, export, get graded. Rerun daily — the goal is boring correctness.</p>
+    <p>Twelve short reps, each targeting a real miss pattern: dict colons, methods-that-return-new, mask vs filter, sum vs count, the named-agg shape, and on= vs by= three times in three disguises. Type from memory, export, get graded. Rerun daily — the goal is boring correctness.</p>
+  </div>
+
+  <div class="card">
+    <div class="tbl-cap">The schemas — every drill uses exactly these column names (in the real exercise, you'd get this from df.head())</div>
+    <pre class="code">games      : date, team, opponent, pts_for, pts_against, margin, win (0/1)
+ranks      : date, team, rank
+trades     : ts, symbol, price, size
+quotes     : ts, symbol, bid, ask
+deliveries : dropoff_time, city, minutes_late
+weather    : obs_time, city, rain_mm</pre>
   </div>
 
   <div class="topic">
