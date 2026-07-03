@@ -185,6 +185,7 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
     <button class="tab" data-lvl="2"><span class="t-lvl">Level 2</span><span class="t-name">ELI14</span><span class="t-prog" data-prog="2">0/8</span></button>
     <button class="tab" data-lvl="3"><span class="t-lvl">Level 3</span><span class="t-name">Analyst</span><span class="t-prog" data-prog="3">0/8</span></button>
     <button class="tab" data-lvl="4"><span class="t-lvl">Level 4</span><span class="t-name">Expert</span><span class="t-prog" data-prog="4">0/8</span></button>
+    <button class="tab" data-lvl="5"><span class="t-lvl">Level 5</span><span class="t-name">Gauntlet</span><span class="t-prog" data-prog="5">0/10</span></button>
   </nav>
 </header>
 
@@ -788,6 +789,98 @@ taq["bid"].isna().mean()                         # audit: % refused as stale</pr
   </div>
 </section>
 
+<!-- ═══════════════════════ LEVEL 5 · GAUNTLET ═══════════════════════ -->
+<section class="level" id="lvl5" hidden>
+  <div class="lvl-hero">
+    <div class="eyebrow">Level 5 · The Gauntlet</div>
+    <h2>Drills for the bugs you actually write</h2>
+    <p>Ten short reps, each targeting a real miss pattern: dict colons, methods-that-return-new, mask vs filter, sum vs count, and on= vs by= three times in three disguises. Type from memory, export, get graded. Rerun daily — the goal is boring correctness.</p>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Syntax reflexes</div>
+
+    <div class="ex" data-exid="ex5-1" data-extitle="G1 Dict-colon speed rep">
+      <div class="ex-head"><span class="ex-tag">Drill 1</span><span class="ex-title">Dict-colon speed rep</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Type three tiny DataFrames as dict literals, no peeking: <code class="ic">candy</code> (color, yum), <code class="ic">games</code> (team, pts), <code class="ic">quotes</code> (ts, bid, ask). Include the import. Every <code class="ic">key: value</code> colon is the rep.</p>
+      <textarea class="ex-code" placeholder="import pandas as pd&#10;candy = ...&#10;games = ...&#10;quotes = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Dicts use <code class="ic">:</code> — <code class="ic">pd.DataFrame({"color": [...], "yum": [...]})</code>. (Named agg is the one that uses <code class="ic">=</code>.)</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-2" data-extitle="G2 Methods return new">
+      <div class="ex-head"><span class="ex-tag">Drill 2</span><span class="ex-title">Methods return new</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Both snippets are broken the same way. Fix both. (a) <code class="ic">games.set_index("date")</code> then <code class="ic">weekly = games["pts_for"].resample("W").mean()</code> — raises "Only valid with DatetimeIndex". (b) <code class="ic">trades.sort_values("ts", in_place=True)</code> — raises TypeError.</p>
+      <textarea class="ex-code" placeholder="# (a) fixed&#10;&#10;# (b) fixed" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Most DataFrame methods return a NEW frame — chain or reassign: <code class="ic">weekly = games.set_index("date")["pts_for"]...</code>; <code class="ic">trades = trades.sort_values("ts")</code>. (And the keyword is <code class="ic">inplace</code>, but reassigning is the better habit.)</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-3" data-extitle="G3 Mask vs filter">
+      <div class="ex-head"><span class="ex-tag">Drill 3</span><span class="ex-title">Mask vs filter</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Using <code class="ic">games</code> with a <code class="ic">margin</code> column, write BOTH — and label which is which: (a) a boolean column <code class="ic">blowout</code>: margin &gt; 20. (b) a DataFrame containing only the blowout games. One character group separates them.</p>
+      <textarea class="ex-code" placeholder="# (a) the flag column&#10;&#10;# (b) the filtered frame" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">The comparison alone IS the boolean Series: <code class="ic">games["margin"] &gt; 20</code>. Wrapping it in <code class="ic">games[...]</code> uses it to select rows. Flag = mask; filter = frame[mask].</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-4" data-extitle="G4 sum vs count vs size">
+      <div class="ex-head"><span class="ex-tag">Drill 4</span><span class="ex-title">sum vs count vs size</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">One named agg, one row per team: <code class="ic">gp</code> = games played, <code class="ic">wins</code> = win total (win is 0/1), <code class="ic">opps</code> = number of distinct opponents. Three different reducers — pick each deliberately.</p>
+      <textarea class="ex-code" placeholder="team_tbl = games.groupby(...)..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">count = how many rows; sum = add the 0/1s; nunique = distinct values. <code class="ic">.agg(gp=("win","count"), wins=("win","sum"), opps=("opponent","nunique"))</code></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-5" data-extitle="G5 Named agg reps">
+      <div class="ex-head"><span class="ex-tag">Drill 5</span><span class="ex-title">Named agg reps</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">One row per symbol from <code class="ic">trades</code>: <code class="ic">n</code> = number of trades, <code class="ic">volume</code> = total size, <code class="ic">hi</code> = max price. Then a second statement: each trade's share of its symbol's volume as column <code class="ic">pct</code> (that's the other verb).</p>
+      <textarea class="ex-code" placeholder="per_sym = ...&#10;&#10;trades[&quot;pct&quot;] = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Collapse → named agg with <code class="ic">=</code>. Per-row share → <code class="ic">transform("sum")</code> then divide.</div></details>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">on= is the timeline you walk · by= is the lane you stay in</div>
+
+    <div class="ex" data-exid="ex5-6" data-extitle="G6 asof rep 1 — rankings">
+      <div class="ex-head"><span class="ex-tag">Drill 6</span><span class="ex-title">asof rep 1 — rankings</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Complete, from memory: attach each team's most recent published ranking (<code class="ic">ranks</code>: date, team, rank) to every game. Include the pre-flight both tables demand, the full call, and say the mnemonic in a comment.</p>
+      <textarea class="ex-code" placeholder="# sorts&#10;&#10;# the call&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Sort BOTH by date (reassign!). <code class="ic">pd.merge_asof(games, ranks, on="date", by="team", direction="backward")</code>. on = the ordered time key you walk; by = the exact lane.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-7" data-extitle="G7 asof rep 2 — quotes">
+      <div class="ex-head"><span class="ex-tag">Drill 7</span><span class="ex-title">asof rep 2 — quotes</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Same skeleton, new disguise: every trade gets the prevailing quote for its symbol, refusing quotes older than 2 seconds. Then compute <code class="ic">spread</code>. Which argument changed roles from Drill 6 — and which stayed?</p>
+      <textarea class="ex-code" placeholder="# sorts, call with tolerance, spread" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">on="ts", by="symbol", tolerance=pd.Timedelta("2s"). The timeline changed name (date→ts), the lane changed name (team→symbol) — the ROLES didn't.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-8" data-extitle="G8 asof rep 3 — weather">
+      <div class="ex-head"><span class="ex-tag">Drill 8</span><span class="ex-title">asof rep 3 — weather</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Novel context — derive it, don't recall it: <code class="ic">deliveries</code> (dropoff_time, city, minutes_late) and <code class="ic">weather</code> (obs_time, city, rain_mm). Each delivery needs the most recent weather reading at-or-before dropoff, in its own city. Note the on-columns have different names on each side.</p>
+      <textarea class="ex-code" placeholder="# hint: the on key has two names here..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">left_on="dropoff_time", right_on="obs_time"</code>, <code class="ic">by="city"</code>, backward. Ask: which key can I WALK? Time. Which key must match EXACTLY? City.</div></details>
+    </div>
+  </div>
+
+  <div class="topic">
+    <div class="eyebrow">Put it together</div>
+
+    <div class="ex" data-exid="ex5-9" data-extitle="G9 resample vs rolling pair">
+      <div class="ex-head"><span class="ex-tag">Drill 9</span><span class="ex-title">resample vs rolling pair</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">From <code class="ic">g</code> (datetime index, column pts_for): (a) one number per week — the mean. (b) for every game, the mean over the trailing 7 calendar days. One line each; say which collapses and which keeps the shape.</p>
+      <textarea class="ex-code" placeholder="# (a)&#10;# (b)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) <code class="ic">resample("W").mean()</code> — collapses. (b) <code class="ic">rolling("7D").mean()</code> — one value per row; "7D" is a clock window, 7 would be 7 rows.</div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-10" data-extitle="G10 The sealer — mini end-to-end">
+      <div class="ex-head"><span class="ex-tag">Drill 10</span><span class="ex-title">The sealer — mini end-to-end</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Cold, no hints until you've tried: read <code class="ic">games.csv</code> (parse the date), weekly mean points via a correctly-captured datetime index, per-team named agg (gp/ppg/wins), a <code class="ic">hot</code> flag via the broadcast verb, and rankings attached as-of game day. Five statements, every miss pattern in one place.</p>
+      <textarea class="ex-code" placeholder="# 1 read  2 weekly  3 team table  4 hot  5 asof" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">read_csv(parse_dates=["date"]) → set_index CAPTURED → resample → agg(gp=..., wins=("win","sum")) → transform("mean") compare (the mask IS the flag) → sort both, merge_asof(on="date", by="team").</div></details>
+    </div>
+    <div class="note"><strong>Daily protocol:</strong> clear yesterday's answers (retype, don't reread), run the Gauntlet, export, get graded. When Drills 6–8 come out identical-in-shape three days running, on/by is yours forever.</div>
+  </div>
+</section>
+
 </main>
 
 <div class="export-bar"><button class="export-btn" id="exportBtn">⬆ Export answers for grading</button></div>
@@ -821,7 +914,7 @@ if(store.get('theme'))document.documentElement.dataset.theme=store.get('theme');
 const tabs=$$('.tab');
 function showLvl(n){
   tabs.forEach(t=>t.classList.toggle('on',t.dataset.lvl==n));
-  [1,2,3,4].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
+  [1,2,3,4,5].forEach(i=>{$('#lvl'+i).hidden=(i!=n)});
   window.scrollTo(0,0);store.set('lvl',n);
 }
 tabs.forEach(t=>t.addEventListener('click',()=>showLvl(t.dataset.lvl)));
@@ -855,7 +948,7 @@ $$('.ex').forEach(ex=>{
 
 /* ── progress chips ── */
 function updateProgress(){
-  [1,2,3,4].forEach(n=>{
+  [1,2,3,4,5].forEach(n=>{
     const sec=$('#lvl'+n), qs=$$('.quiz',sec), exs=$$('.ex',sec);
     const done=qs.filter(q=>q.classList.contains('done')).length+exs.filter(e=>$('.ex-done',e).checked).length;
     $('[data-prog="'+n+'"]').textContent=done+'/'+(qs.length+exs.length);
