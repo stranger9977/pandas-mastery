@@ -678,11 +678,14 @@ quotes : ts, symbol, bid, ask</pre>
   <div class="topic">
     <div class="eyebrow">Discipline 1 · Load small, not everything</div>
     <h3>Memory is won at read time</h3>
-    <pre class="code">df = pd.read_parquet(
+    <pre class="code">universe = ["AAA", "BBB", "CCC"]          # the symbols you need ("your universe")
+start    = pd.Timestamp("2026-06-01")     # earliest moment you care about
+
+df = pd.read_parquet(
     "ticks.parquet",
     columns=["ts","symbol","price","size"],          # never load what you won't use
-    filters=[("symbol","in",universe),
-             ("ts",">=", start)],                    # predicate pushdown: skip row groups on disk
+    filters=[("symbol","in",universe),               # (column, op, value) triples, ANDed —
+             ("ts",">=", start)],                    # run ON DISK: row groups that can't match are never read
 )
 df["symbol"] = df["symbol"].astype("category")       # 500 strings → int codes
 df["size"]   = df["size"].astype("int32")            # halve the ints
