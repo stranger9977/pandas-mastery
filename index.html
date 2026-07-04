@@ -167,6 +167,9 @@ textarea.ex-code::placeholder{color:var(--com)}
 details.ex-hint{margin-top:.5rem;font-size:.85rem}
 details.ex-hint summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:.8rem}
 details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-radius:8px;padding:.55rem .75rem}
+details.ex-answer{margin-top:.45rem}
+details.ex-answer summary{color:var(--muted);font-size:.74rem;cursor:pointer;font-weight:600}
+details.ex-answer>.hint-body{border-left:2px solid var(--bad);margin-top:.3rem}
 
 /* ── flashcards ────────────────────────────────── */
 .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.6rem;margin:1rem 0}
@@ -332,21 +335,21 @@ details.ex-hint .hint-body{margin-top:.4rem;background:var(--surface2);border-ra
       <div class="ex-head"><span class="ex-tag">Exercise 1.1</span><span class="ex-title">Build the candy table</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Make the candy DataFrame from scratch with <code class="ic">pd.DataFrame</code> and a dict: columns <code class="ic">color</code> (red, green, red, blue), <code class="ic">yum</code> (5, 3, 4, 2).</p>
       <textarea class="ex-code" placeholder="import pandas as pd&#10;candy = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">A dict of lists: keys become column names, lists become the column values. <code class="ic">pd.DataFrame({"color": [...], "yum": [...]})</code></div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Dict keys become column names; values are lists. Which punctuation pairs a key with its value?<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">A dict of lists: keys become column names, lists become the column values. <code class="ic">pd.DataFrame({"color": [...], "yum": [...]})</code></div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex1-2" data-extitle="L1.2 Count each pile">
       <div class="ex-head"><span class="ex-tag">Exercise 1.2</span><span class="ex-title">Count each pile</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">One line: how many candies of each color? Then a second line: the <em>average yum</em> per color.</p>
       <textarea class="ex-code" placeholder="# counts per color&#10;&#10;# average yum per color" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Pattern: <code class="ic">df.groupby(KEY)[COL].something()</code>. Counting a pile = <code class="ic">.size()</code> (or <code class="ic">value_counts()</code> on the column). Averaging = <code class="ic">.mean()</code>.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Both lines are groupby(color) + a reducer — one counts rows in the pile, one averages a column of it.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Pattern: <code class="ic">df.groupby(KEY)[COL].something()</code>. Counting a pile = <code class="ic">.size()</code> (or <code class="ic">value_counts()</code> on the column). Averaging = <code class="ic">.mean()</code>.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex1-3" data-extitle="L1.3 Lunch match">
       <div class="ex-head"><span class="ex-tag">Exercise 1.3</span><span class="ex-title">Lunch match</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Given <code class="ic">kids</code> (columns name, animal) and <code class="ic">lunch</code> (columns name, food) — combine them keeping <strong>every kid</strong>, even kids with no lunch row.</p>
       <textarea class="ex-code" placeholder="both = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">kids.merge(lunch, on="name", how=?)</code> — which <code class="ic">how</code> keeps all of the left table?</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Which <code class="ic">how=</code> keeps every row of the LEFT table, empty boxes and all?<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body"><code class="ic">kids.merge(lunch, on="name", how=?)</code> — which <code class="ic">how</code> keeps all of the left table?</div></details></div></details>
     </div>
   </div>
   <div class="next-cta"><button class="next-btn" data-goto="2">Level 2: your data now has a season schedule →</button></div>
@@ -492,21 +495,21 @@ with_rank = pd.merge_asof(
       <div class="ex-head"><span class="ex-tag">Exercise 2.1</span><span class="ex-title">Weekly scoring</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Starting from <code class="ic">games</code> (has a <code class="ic">date</code> column, already parsed): produce average <code class="ic">pts_for</code> per <strong>week</strong>. Two steps — get time into the index, then bucket it.</p>
       <textarea class="ex-code" placeholder="weekly = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">set_index("date")</code> then <code class="ic">["pts_for"].resample("W").mean()</code>. resample needs time in the index (or use <code class="ic">on="date"</code>).</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">resample needs time in the index — and remember what pandas methods return.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body"><code class="ic">set_index("date")</code> then <code class="ic">["pts_for"].resample("W").mean()</code>. resample needs time in the index (or use <code class="ic">on="date"</code>).</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex2-2" data-extitle="L2.2 Team table + hot games">
       <div class="ex-head"><span class="ex-tag">Exercise 2.2</span><span class="ex-title">Team table + hot games</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">(a) One row per team: games played, points per game, win total — with those column names. (b) Add a boolean column <code class="ic">hot</code> to <code class="ic">games</code>: did the team beat its own season scoring average that night?</p>
       <textarea class="ex-code" placeholder="# (a) leaderboard&#10;&#10;# (b) hot flag" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) named agg: <code class="ic">.agg(gp=("pts_for","count"), ...)</code>. (b) the fork: per-row output → <code class="ic">transform("mean")</code> then compare.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) one row per team → collapse. (b) a value on every game row → the broadcast verb, then compare.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) named agg: <code class="ic">.agg(gp=("pts_for","count"), ...)</code>. (b) the fork: per-row output → <code class="ic">transform("mean")</code> then compare.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex2-3" data-extitle="L2.3 Ranking as of game day">
       <div class="ex-head"><span class="ex-tag">Exercise 2.3</span><span class="ex-title">Ranking as of game day</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Attach each team's most recent published ranking to every game. <code class="ic">ranks</code> has columns <code class="ic">date, team, rank</code> (published Mondays). Don't forget the requirement merge_asof enforces before it will even run.</p>
       <textarea class="ex-code" placeholder="with_rank = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Sort both by <code class="ic">date</code> first. Then <code class="ic">pd.merge_asof(games, ranks, on="date", by="team", direction="backward")</code>.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Pre-flight both tables. Then: which key do you walk, and which lane do you stay in?<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Sort both by <code class="ic">date</code> first. Then <code class="ic">pd.merge_asof(games, ranks, on="date", by="team", direction="backward")</code>.</div></details></div></details>
     </div>
   </div>
   <div class="next-cta"><button class="next-btn" data-goto="3">Level 3: the data becomes ticks and quotes →</button></div>
@@ -656,21 +659,21 @@ quotes : ts, symbol, bid, ask</pre>
       <div class="ex-head"><span class="ex-tag">Exercise 3.1</span><span class="ex-title">One-pass bars</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">From <code class="ic">trades</code> (ts parsed, symbol category): build 5-minute bars per symbol — open/high/low/close of price plus volume (sum of size) — in a single groupby. Use the Grouper pattern.</p>
       <textarea class="ex-code" placeholder="bars = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">groupby(["symbol", pd.Grouper(key="ts", freq="5min")], observed=True).agg(open=("price","first"), ...)</code></div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">One groupby, two keys: the category and a 5-minute time bucket. Named agg for all five outputs.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body"><code class="ic">groupby(["symbol", pd.Grouper(key="ts", freq="5min")], observed=True).agg(open=("price","first"), ...)</code></div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex3-2" data-extitle="L3.2 Participation rate">
       <div class="ex-head"><span class="ex-tag">Exercise 3.2</span><span class="ex-title">Participation rate</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Add a column <code class="ic">participation</code> to <code class="ic">trades</code>: each trade's size as a fraction of its symbol's total traded size. One verb does this — pick it and say why out loud.</p>
       <textarea class="ex-code" placeholder="trades[&quot;participation&quot;] = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Per-row output → broadcast: <code class="ic">trades["size"] / trades.groupby("symbol", observed=True)["size"].transform("sum")</code></div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">The answer belongs on every row → broadcast. And the numerator is the row itself.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Per-row output → broadcast: <code class="ic">trades["size"] / trades.groupby("symbol", observed=True)["size"].transform("sum")</code></div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex3-3" data-extitle="L3.3 Trade-at-quote">
       <div class="ex-head"><span class="ex-tag">Exercise 3.3</span><span class="ex-title">Trade-at-quote</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Attach the prevailing quote to every trade (per symbol, no quotes older than 2 seconds), then compute <code class="ic">spread</code> and flag trades that printed <em>above the ask</em>. Include the prep steps merge_asof demands.</p>
       <textarea class="ex-code" placeholder="# sort, merge_asof, spread, flag" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">sort both by ts → <code class="ic">pd.merge_asof(trades, quotes, on="ts", by="symbol", tolerance=pd.Timedelta("2s"))</code> → <code class="ic">taq["price"] &gt; taq["ask"]</code>.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Sort both → walk ts, stay in symbol's lane, bounce stale quotes → spread is the scalper's cut (which way round?).<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">sort both by ts → <code class="ic">pd.merge_asof(trades, quotes, on="ts", by="symbol", tolerance=pd.Timedelta("2s"))</code> → <code class="ic">taq["price"] &gt; taq["ask"]</code>.</div></details></div></details>
     </div>
   </div>
   <div class="next-cta"><button class="next-btn" data-goto="4">Level 4: ninety million rows walk into a bar →</button></div>
@@ -819,21 +822,21 @@ taq["bid"].isna().mean()                         # audit: % refused as stale</pr
       <div class="ex-head"><span class="ex-tag">Exercise 4.1</span><span class="ex-title">Lean ingest + 15-min bars</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">A parquet of 1-minute prices (ts, stock, price, volume) is too big to load whole. Write the ingest for just stocks "a","b","c" and only the columns you need, then one-pass 15-min bars per stock: OHLC of price + volume sum, stamped with bar END time.</p>
       <textarea class="ex-code" placeholder="# read_parquet with columns= and filters=&#10;# groupby + Grouper/resample with label/closed&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">read_parquet(columns=[...], filters=[("stock","in",["a","b","c"])]) → astype("category") → groupby(["stock", pd.Grouper(key="ts", freq="15min", label="right", closed="right")], observed=True).agg(...)</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Filter and select INSIDE the read call; then shrink dtypes; then the two-key groupby with the bar-edge dials.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">read_parquet(columns=[...], filters=[("stock","in",["a","b","c"])]) → astype("category") → groupby(["stock", pd.Grouper(key="ts", freq="15min", label="right", closed="right")], observed=True).agg(...)</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex4-2" data-extitle="L4.2 Leakage-safe vol feature">
       <div class="ex-head"><span class="ex-tag">Exercise 4.2</span><span class="ex-title">Leakage-safe vol feature</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">On those bars: per-stock log returns, a 20-bar rolling std, then make it a feature usable at prediction time. All per-group, no loops — and name the leakage lock you applied.</p>
       <textarea class="ex-code" placeholder="# log returns per stock&#10;# rolling std per stock&#10;# the lock&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">ret = np.log(close).groupby(level="stock").diff() (or transform); vol = per-group rolling(20).std(); feature = vol.groupby(level="stock").shift(1). The lock is shift — window ends AT the row.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Log of close, diff per group, rolling std per group — then the leakage lock.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">ret = np.log(close).groupby(level="stock").diff() (or transform); vol = per-group rolling(20).std(); feature = vol.groupby(level="stock").shift(1). The lock is shift — window ends AT the row.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex4-3" data-extitle="L4.3 Audited asof join">
       <div class="ex-head"><span class="ex-tag">Exercise 4.3</span><span class="ex-title">Audited asof join</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Full production trade↔quote join: pre-flight asserts, dedupe duplicate quote timestamps, backward asof per symbol with a 5s tolerance, then print the % of trades with no quote and the median spread by symbol. Write it like someone will run it at 3am.</p>
       <textarea class="ex-code" placeholder="# asserts → dedupe → merge_asof → audit prints&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">is_monotonic_increasing asserts; drop_duplicates(["symbol","ts"], keep="last"); merge_asof(..., by="symbol", tolerance=...); taq["bid"].isna().mean(); taq.groupby("symbol", observed=True)["spread"].median().</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Assert sortedness, dedupe keep=last, asof with tolerance — then two audit numbers.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">is_monotonic_increasing asserts; drop_duplicates(["symbol","ts"], keep="last"); merge_asof(..., by="symbol", tolerance=...); taq["bid"].isna().mean(); taq.groupby("symbol", observed=True)["spread"].median().</div></details></div></details>
     </div>
 
     <div class="note"><strong>Graduation test.</strong> Close this page. In an empty notebook, from memory: ingest lean → build labeled bars → one leakage-safe feature → audited asof join → two printed audit numbers. If you can type that cold, there is nothing in the three pandas guides that can surprise you.</div>
@@ -865,35 +868,35 @@ weather    : obs_time, city, rain_mm</pre>
       <div class="ex-head"><span class="ex-tag">Drill 1</span><span class="ex-title">Dict-colon speed rep</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Type three tiny DataFrames as dict literals, no peeking: <code class="ic">candy</code> (color, yum), <code class="ic">games</code> (team, pts), <code class="ic">quotes</code> (ts, bid, ask). Include the import. Every <code class="ic">key: value</code> colon is the rep.</p>
       <textarea class="ex-code" placeholder="import pandas as pd&#10;candy = ...&#10;games = ...&#10;quotes = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Dicts use <code class="ic">:</code> — <code class="ic">pd.DataFrame({"color": [...], "yum": [...]})</code>. (Named agg is the one that uses <code class="ic">=</code>.)</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Dicts pair with one punctuation mark, three times per table.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Dicts use <code class="ic">:</code> — <code class="ic">pd.DataFrame({"color": [...], "yum": [...]})</code>. (Named agg is the one that uses <code class="ic">=</code>.)</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-2" data-extitle="G2 Methods return new">
       <div class="ex-head"><span class="ex-tag">Drill 2</span><span class="ex-title">Methods return new</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Both snippets are broken the same way. Fix both. (a) <code class="ic">games.set_index("date")</code> then <code class="ic">weekly = games["pts_for"].resample("W").mean()</code> — raises "Only valid with DatetimeIndex". (b) <code class="ic">trades.sort_values("ts", in_place=True)</code> — raises TypeError.</p>
       <textarea class="ex-code" placeholder="# (a) fixed&#10;&#10;# (b) fixed" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Most DataFrame methods return a NEW frame — chain or reassign: <code class="ic">weekly = games.set_index("date")["pts_for"]...</code>; <code class="ic">trades = trades.sort_values("ts")</code>. (And the keyword is <code class="ic">inplace</code>, but reassigning is the better habit.)</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Nothing edits in place unless you catch the return value.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Most DataFrame methods return a NEW frame — chain or reassign: <code class="ic">weekly = games.set_index("date")["pts_for"]...</code>; <code class="ic">trades = trades.sort_values("ts")</code>. (And the keyword is <code class="ic">inplace</code>, but reassigning is the better habit.)</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-3" data-extitle="G3 Mask vs filter">
       <div class="ex-head"><span class="ex-tag">Drill 3</span><span class="ex-title">Mask vs filter</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Using <code class="ic">games</code> with a <code class="ic">margin</code> column, write BOTH — and label which is which: (a) a boolean column <code class="ic">blowout</code>: margin &gt; 20. (b) a DataFrame containing only the blowout games. One character group separates them.</p>
       <textarea class="ex-code" placeholder="# (a) the flag column&#10;&#10;# (b) the filtered frame" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">The comparison alone IS the boolean Series: <code class="ic">games["margin"] &gt; 20</code>. Wrapping it in <code class="ic">games[...]</code> uses it to select rows. Flag = mask; filter = frame[mask].</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">The comparison alone IS the flag; wrapping it in df[...] selects rows instead.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">The comparison alone IS the boolean Series: <code class="ic">games["margin"] &gt; 20</code>. Wrapping it in <code class="ic">games[...]</code> uses it to select rows. Flag = mask; filter = frame[mask].</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-4" data-extitle="G4 sum vs count vs size">
       <div class="ex-head"><span class="ex-tag">Drill 4</span><span class="ex-title">sum vs count vs size</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">One named agg, one row per team: <code class="ic">gp</code> = games played, <code class="ic">wins</code> = win total (win is 0/1), <code class="ic">opps</code> = number of distinct opponents. Three different reducers — pick each deliberately.</p>
       <textarea class="ex-code" placeholder="team_tbl = games.groupby(...)..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">count = how many rows; sum = add the 0/1s; nunique = distinct values. <code class="ic">.agg(gp=("win","count"), wins=("win","sum"), opps=("opponent","nunique"))</code></div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Three different reducers: how many rows · add the 0/1s · distinct values.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">count = how many rows; sum = add the 0/1s; nunique = distinct values. <code class="ic">.agg(gp=("win","count"), wins=("win","sum"), opps=("opponent","nunique"))</code></div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-5" data-extitle="G5 Named agg reps">
       <div class="ex-head"><span class="ex-tag">Drill 5</span><span class="ex-title">Named agg reps</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">One row per symbol from <code class="ic">trades</code>: <code class="ic">n</code> = number of trades, <code class="ic">volume</code> = total size, <code class="ic">hi</code> = max price. Then a second statement: each trade's share of its symbol's volume as column <code class="ic">pct</code> (that's the other verb).</p>
       <textarea class="ex-code" placeholder="per_sym = ...&#10;&#10;trades[&quot;pct&quot;] = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Collapse → named agg with <code class="ic">=</code>. Per-row share → <code class="ic">transform("sum")</code> then divide.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Collapse = named agg with =. Share = the row itself over the group total.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Collapse → named agg with <code class="ic">=</code>. Per-row share → <code class="ic">transform("sum")</code> then divide.</div></details></div></details>
     </div>
   </div>
 
@@ -904,21 +907,21 @@ weather    : obs_time, city, rain_mm</pre>
       <div class="ex-head"><span class="ex-tag">Drill 6</span><span class="ex-title">asof rep 1 — rankings</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Complete, from memory: attach each team's most recent published ranking (<code class="ic">ranks</code>: date, team, rank) to every game. Include the pre-flight both tables demand, the full call, and say the mnemonic in a comment.</p>
       <textarea class="ex-code" placeholder="# sorts&#10;&#10;# the call&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Sort BOTH by date (reassign!). <code class="ic">pd.merge_asof(games, ranks, on="date", by="team", direction="backward")</code>. on = the ordered time key you walk; by = the exact lane.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Sort both first. on is the timeline you walk; by is the lane you stay in.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">Sort BOTH by date (reassign!). <code class="ic">pd.merge_asof(games, ranks, on="date", by="team", direction="backward")</code>. on = the ordered time key you walk; by = the exact lane.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-7" data-extitle="G7 asof rep 2 — quotes">
       <div class="ex-head"><span class="ex-tag">Drill 7</span><span class="ex-title">asof rep 2 — quotes</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Same skeleton, new disguise: every trade gets the prevailing quote for its symbol, refusing quotes older than 2 seconds. Then compute <code class="ic">spread</code>. Which argument changed roles from Drill 6 — and which stayed?</p>
       <textarea class="ex-code" placeholder="# sorts, call with tolerance, spread" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">on="ts", by="symbol", tolerance=pd.Timedelta("2s"). The timeline changed name (date→ts), the lane changed name (team→symbol) — the ROLES didn't.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Identical skeleton — only the column NAMES changed; the roles didn't.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">on="ts", by="symbol", tolerance=pd.Timedelta("2s"). The timeline changed name (date→ts), the lane changed name (team→symbol) — the ROLES didn't.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-8" data-extitle="G8 asof rep 3 — weather">
       <div class="ex-head"><span class="ex-tag">Drill 8</span><span class="ex-title">asof rep 3 — weather</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Novel context — derive it, don't recall it: <code class="ic">deliveries</code> (dropoff_time, city, minutes_late) and <code class="ic">weather</code> (obs_time, city, rain_mm). Each delivery needs the most recent weather reading at-or-before dropoff, in its own city. Note the on-columns have different names on each side.</p>
       <textarea class="ex-code" placeholder="# hint: the on key has two names here..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body"><code class="ic">left_on="dropoff_time", right_on="obs_time"</code>, <code class="ic">by="city"</code>, backward. Ask: which key can I WALK? Time. Which key must match EXACTLY? City.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Which key can you WALK? Which must match EXACTLY? And the time key wears two names here.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body"><code class="ic">left_on="dropoff_time", right_on="obs_time"</code>, <code class="ic">by="city"</code>, backward. Ask: which key can I WALK? Time. Which key must match EXACTLY? City.</div></details></div></details>
     </div>
   </div>
 
@@ -929,27 +932,27 @@ weather    : obs_time, city, rain_mm</pre>
       <div class="ex-head"><span class="ex-tag">Drill 9</span><span class="ex-title">resample vs rolling pair</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">From <code class="ic">g</code> (datetime index, column pts_for): (a) one number per week — the mean. (b) for every game, the mean over the trailing 7 calendar days. One line each; say which collapses and which keeps the shape.</p>
       <textarea class="ex-code" placeholder="# (a)&#10;# (b)" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) <code class="ic">resample("W").mean()</code> — collapses. (b) <code class="ic">rolling("7D").mean()</code> — one value per row; "7D" is a clock window, 7 would be 7 rows.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">One collapses into calendar buckets; one slides a clock window and keeps every row.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) <code class="ic">resample("W").mean()</code> — collapses. (b) <code class="ic">rolling("7D").mean()</code> — one value per row; "7D" is a clock window, 7 would be 7 rows.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-10" data-extitle="G10 The sealer — mini end-to-end">
       <div class="ex-head"><span class="ex-tag">Drill 10</span><span class="ex-title">The sealer — mini end-to-end</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Cold, no hints until you've tried: read <code class="ic">games.csv</code> (parse the date), weekly mean points via a correctly-captured datetime index, per-team named agg (gp/ppg/wins), a <code class="ic">hot</code> flag via the broadcast verb, and rankings attached as-of game day. Five statements, every miss pattern in one place.</p>
       <textarea class="ex-code" placeholder="# 1 read  2 weekly  3 team table  4 hot  5 asof" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">read_csv(parse_dates=["date"]) → set_index CAPTURED → resample → agg(gp=..., wins=("win","sum")) → transform("mean") compare (the mask IS the flag) → sort both, merge_asof(on="date", by="team").</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Say the chain: read → capture the index → bucket → collapse → broadcast-compare → sort + asof.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">read_csv(parse_dates=["date"]) → set_index CAPTURED → resample → agg(gp=..., wins=("win","sum")) → transform("mean") compare (the mask IS the flag) → sort both, merge_asof(on="date", by="team").</div></details></div></details>
     </div>
     <div class="ex" data-exid="ex5-11" data-extitle="G11 equals-paren-comma ×3">
       <div class="ex-head"><span class="ex-tag">Drill 11</span><span class="ex-title">equals-paren-comma ×3</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Three named aggs, three domains, zero colons. (a) trades → per symbol: <code class="ic">n</code> = number of trades, <code class="ic">volume</code> = total size, <code class="ic">hi</code> = max price. (b) games → per team: <code class="ic">gp</code>, <code class="ic">ppg</code>, <code class="ic">wins</code>. (c) deliveries → per city: <code class="ic">n</code>, <code class="ic">worst</code> = max minutes_late. Say the chant while typing: <em>equals, paren, quote-comma-quote</em>.</p>
       <textarea class="ex-code" placeholder="# (a)&#10;&#10;# (b)&#10;&#10;# (c)" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">.agg() is a function call → kwargs use <code class="ic">=</code>. Each value is a TUPLE: <code class="ic">("col", "func")</code> — comma, both quoted. Colons live inside <code class="ic">{}</code> only; there are no braces in .agg(). n = ("price","count") — count any column, or use ("size","count").</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">equals, paren, quote-comma-quote — no braces, no colons, all strings.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">.agg() is a function call → kwargs use <code class="ic">=</code>. Each value is a TUPLE: <code class="ic">("col", "func")</code> — comma, both quoted. Colons live inside <code class="ic">{}</code> only; there are no braces in .agg(). n = ("price","count") — count any column, or use ("size","count").</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex5-12" data-extitle="G12 The row and its group">
       <div class="ex-head"><span class="ex-tag">Drill 12</span><span class="ex-title">The row and its group</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Both patterns compare a row to its own group — write both. (a) <code class="ic">pct</code>: each trade's share of its symbol's total volume (numerator = the row itself, no verb). (b) <code class="ic">hot</code>: did each game beat its team's season scoring average? (comparison against a broadcast mean — NOT a fixed number).</p>
       <textarea class="ex-code" placeholder="# (a) share of group&#10;&#10;# (b) beat the group average" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) <code class="ic">trades["size"] / trades.groupby("symbol")["size"].transform("sum")</code>. (b) <code class="ic">games["pts_for"] &gt; games.groupby("team")["pts_for"].transform("mean")</code>. Shape check: both outputs are one value per ROW → the verb (when needed) is transform.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) numerator = the row itself, no verb. (b) compare against a broadcast mean, not a fixed number.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) <code class="ic">trades["size"] / trades.groupby("symbol")["size"].transform("sum")</code>. (b) <code class="ic">games["pts_for"] &gt; games.groupby("team")["pts_for"].transform("mean")</code>. Shape check: both outputs are one value per ROW → the verb (when needed) is transform.</div></details></div></details>
     </div>
 
     <div class="note"><strong>Daily protocol:</strong> clear yesterday's answers (retype, don't reread), run the Gauntlet, export, get graded. When Drills 6–8 come out identical-in-shape three days running, on/by is yours forever — same test for 11–12 and the agg shape.</div>
@@ -1042,7 +1045,7 @@ weather    : obs_time, city, rain_mm</pre>
       <div class="ex-head"><span class="ex-tag">Exercise V1</span><span class="ex-title">Vocab → pandas translation</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Four one-liners from <code class="ic">taq</code> (columns: ts, symbol, price, size, bid, ask): <code class="ic">mid</code>, <code class="ic">spread</code>, <code class="ic">notional</code>, and <code class="ic">size_z</code> (per-symbol z-score of size). Each is either plain column math or the broadcast verb — say which as a comment.</p>
       <textarea class="ex-code" placeholder="taq[&quot;mid&quot;] = ...&#10;taq[&quot;spread&quot;] = ...&#10;taq[&quot;notional&quot;] = ...&#10;taq[&quot;size_z&quot;] = ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">mid/spread/notional: row-wise column math, no groupby. size_z: two <code class="ic">transform</code>s — (size − group mean) / group std.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Three are plain row-wise column math; only the z-score needs the broadcast verb — twice.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">mid/spread/notional: row-wise column math, no groupby. size_z: two <code class="ic">transform</code>s — (size − group mean) / group std.</div></details></div></details>
     </div>
   </div>
 
@@ -1128,7 +1131,7 @@ plt.xlabel("actual"); plt.ylabel("predicted")</pre>
       <div class="ex-head"><span class="ex-tag">Exercise P1</span><span class="ex-title">The five, from memory</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Type all five plot skeletons cold, each with its one-sentence question as a comment above it. This is the drill you rerun the morning of.</p>
       <textarea class="ex-code" placeholder="# 1 what does it look like?&#10;&#10;# 2 ...&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">look · distribution · raw-vs-smooth · holes · pred-vs-actual. Series.plot / .hist / two plots one ax / isna().sum().plot.bar / scatter + axline.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">look · distribution · raw-vs-smooth · holes · pred-vs-actual — one question each.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">look · distribution · raw-vs-smooth · holes · pred-vs-actual. Series.plot / .hist / two plots one ax / isna().sum().plot.bar / scatter + axline.</div></details></div></details>
     </div>
 
     <div class="topic">
@@ -1175,7 +1178,7 @@ plt.xlabel("predicted prob"); plt.ylabel("observed freq")</pre>
         <div class="ex-head"><span class="ex-tag">Exercise P3</span><span class="ex-title">Calibration curve from memory</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
         <p class="ex-prompt">Given <code class="ic">p_pred</code> (predicted probabilities) and <code class="ic">outcome</code> (0/1): bin into deciles, compute observed frequency per bin, plot predicted vs observed with the 45° line. Then one comment: what does it mean if your points sit BELOW the line at the high end?</p>
         <textarea class="ex-code" placeholder="# bin → groupby → mean → plot + axline&#10;" spellcheck="false"></textarea>
-        <details class="ex-hint"><summary>hint</summary><div class="hint-body">pd.cut(p_pred, np.linspace(0,1,11)) → groupby(bins, observed=True).mean() → plot p vs o, axline slope 1. Below the line up high = overconfident: events you call 80% happen less than 80% — the market will happily take the other side.</div></details>
+        <details class="ex-hint"><summary>hint</summary><div class="hint-body">Binning IS a groupby. Then predicted vs observed per bin, with the 45° line for reference.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">pd.cut(p_pred, np.linspace(0,1,11)) → groupby(bins, observed=True).mean() → plot p vs o, axline slope 1. Below the line up high = overconfident: events you call 80% happen less than 80% — the market will happily take the other side.</div></details></div></details>
       </div>
     </div>
 
@@ -1183,7 +1186,7 @@ plt.xlabel("predicted prob"); plt.ylabel("observed freq")</pre>
       <div class="ex-head"><span class="ex-tag">Exercise P2</span><span class="ex-title">Pick the plot</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">For each claim, name the plot number and write its one line: (a) "stock f is missing a third of its data" (b) "my vol feature actually tracks the calm and wild stretches" (c) "the model under-predicts high-vol days".</p>
       <textarea class="ex-code" placeholder="# (a) plot #_, line:&#10;# (b)&#10;# (c)" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) #4. (b) #3-style overlay: price (or |returns|) with vol20 on a secondary view — the windowed line should rise in the wild stretches. (c) #5: points sag below the 45° line at the high end.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Match each claim to the one plot that shows BOTH halves of it at once.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) #4. (b) #3-style overlay: price (or |returns|) with vol20 on a secondary view — the windowed line should rise in the wild stretches. (c) #5: points sag below the 45° line at the high end.</div></details></div></details>
     </div>
   </div>
 </section>
@@ -1313,21 +1316,21 @@ print(f"MODEL     MAE {scores.mean():.4f} vs persistence {persist_mae:.4f}"
       <div class="ex-head"><span class="ex-tag">Exercise M1</span><span class="ex-title">The model block, cold</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">From memory: given <code class="ic">feat</code> with columns vol, vol_lag1, ret_lag1 — build y (next-period vol), X, drop NaN rows, mean + persistence baselines, scaled Ridge pipeline, 5-fold time-aware CV, print model-vs-baseline MAE.</p>
       <textarea class="ex-code" placeholder="# target, features, mask&#10;# baselines&#10;# pipeline + TimeSeriesSplit + cross_val_score&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">y=shift(-1); mask both; DummyRegressor("mean") + (y − X["vol_lag1"]).abs().mean(); Pipeline([scaler, Ridge()]); cross_val_score(..., cv=TimeSeriesSplit(5), scoring="neg_mean_absolute_error").</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Target = NEXT period. Baselines before model. Folds must respect time's arrow.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">y=shift(-1); mask both; DummyRegressor("mean") + (y − X["vol_lag1"]).abs().mean(); Pipeline([scaler, Ridge()]); cross_val_score(..., cv=TimeSeriesSplit(5), scoring="neg_mean_absolute_error").</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex8-2" data-extitle="M2 Bootstrap, then block-bootstrap">
       <div class="ex-head"><span class="ex-tag">Exercise M2</span><span class="ex-title">Bootstrap, then block-bootstrap</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Given returns series <code class="ic">r</code>: (a) a 95% percentile-bootstrap CI for its std, 2000 draws. (b) Upgrade to blocks of 20 and say in a comment WHY the plain version was too narrow.</p>
       <textarea class="ex-code" placeholder="# (a) iid bootstrap&#10;&#10;# (b) block bootstrap + the why&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) list-comp of r.sample(len(r), replace=True).std() → np.percentile([2.5, 97.5]). (b) random block starts, concatenate chunks; vol clusters, iid shuffling destroys that → understated vol-of-vol.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Resample rows with replacement, take percentiles — then ask what shuffling single points does to clustered data.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) list-comp of r.sample(len(r), replace=True).std() → np.percentile([2.5, 97.5]). (b) random block starts, concatenate chunks; vol clusters, iid shuffling destroys that → understated vol-of-vol.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex8-3" data-extitle="M3 The report, verbatim">
       <div class="ex-head"><span class="ex-tag">Exercise M3</span><span class="ex-title">The report, verbatim</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Write your closing report as you'd SAY it: the estimate + interval sentence, the model-vs-baseline verdict (assume the model narrowly loses to persistence), and one "with more time" item. Three sentences, your own words.</p>
       <textarea class="ex-code" placeholder="(say it, then type it)" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">estimate + CI + method; "persistence is a tough bar for vol — the model matching it is expected, not alarming"; next step = a named feature or interval-stability check.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Estimate + interval + method → the honest baseline verdict → one named next step.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">estimate + CI + method; "persistence is a tough bar for vol — the model matching it is expected, not alarming"; next step = a named feature or interval-stability check.</div></details></div></details>
     </div>
   </div>
 </section>
@@ -1395,7 +1398,7 @@ print(f"MODEL     MAE {scores.mean():.4f} vs persistence {persist_mae:.4f}"
       <div class="ex-head"><span class="ex-tag">Exercise D1</span><span class="ex-title">Your opening + your reset</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">In your own words (you'll say these Monday, so write them YOUR way): (a) your two opening clarifying questions, (b) your process-contract sentence, (c) your anxiety-reset line for when a block goes sideways. Practice each out loud twice after typing.</p>
       <textarea class="ex-code" placeholder="(a) ...&#10;(b) ...&#10;(c) ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) data shape/frequency + what the deliverable is. (b) look → plan-as-comments → crude end-to-end → improve. (c) "ten seconds to collect the plan" + the three-step checklist.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Data shape, the deliverable, your process, your reset line — in YOUR words, said aloud twice.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) data shape/frequency + what the deliverable is. (b) look → plan-as-comments → crude end-to-end → improve. (c) "ten seconds to collect the plan" + the three-step checklist.</div></details></div></details>
     </div>
   </div>
 </section>
@@ -1498,7 +1501,7 @@ print(f"MODEL     MAE {scores.mean():.4f} vs persistence {persist_mae:.4f}"
       <div class="ex-head"><span class="ex-tag">Exercise V2</span><span class="ex-title">Say it like the desk</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
       <p class="ex-prompt">Three answers, 2–3 sentences each, in your own words (these are interview answers, not code): (a) "Your model lost money last month — why do you still trust it?" (b) "Why not bet full Kelly?" (c) "You're quoting a tennis match and a sharp account keeps hitting your ask — what do you do and why?"</p>
       <textarea class="ex-code" placeholder="(a) ...&#10;&#10;(b) ...&#10;&#10;(c) ..." spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) CLV: outcomes are noise at this sample size; I beat the de-vigged close. (b) noisy edge estimate → full Kelly over-bets → less growth, more variance. (c) adverse selection: widen/shrink/skew or pull; their fills predict moves — reprice toward their side.</div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">(a) the proof-of-skill metric, not the P&L. (b) your edge is an estimate. (c) whose option is your resting quote?<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) CLV: outcomes are noise at this sample size; I beat the de-vigged close. (b) noisy edge estimate → full Kelly over-bets → less growth, more variance. (c) adverse selection: widen/shrink/skew or pull; their fills predict moves — reprice toward their side.</div></details></div></details>
     </div>
   </div>
 
