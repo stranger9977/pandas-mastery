@@ -1207,6 +1207,57 @@ plt.xlabel("predicted prob"); plt.ylabel("observed freq")</pre>
   </div>
 
   <div class="topic">
+    <div class="eyebrow">Block 4 · Features</div>
+    <h3>Turning the past into columns — and killing noise</h3>
+    <p>A model is dumb in a specific way: <strong>it can only use what sits in the row</strong>. It can't "look back" — so feature engineering is writing the relevant past INTO each row. Three moves cover almost everything:</p>
+    <pre class="code">g = bars.groupby("stock", observed=True)
+
+# 1 LAGS — yesterday's values, verbatim
+bars["vol_lag1"] = g["vol20"].shift(1)
+bars["ret_lag1"] = g["ret"].shift(1)
+
+# 2 WINDOWS — the recent past, averaged (fast + slow = form vs class)
+bars["ret_fast"] = g["ret"].transform(lambda s: s.rolling(5).mean().shift(1))
+bars["ret_slow"] = g["ret"].transform(lambda s: s.rolling(20).mean().shift(1))
+
+# 3 CALENDAR — time-of-day / day-of-week effects
+bars["hour"] = bars["ts"].dt.hour</pre>
+    <ul>
+      <li><strong>Why averaging kills noise — the one equation of the night.</strong> A single 15-min return is almost pure noise. Average n of them and the noise shrinks by <strong>√n</strong> while real signal stays put — a 20-bar mean has ~4.5× the signal-to-noise of one bar. That's why windowed features predict and raw ticks don't. (Remember √n: it's also why CIs narrow with more data. Same math, two costumes.)</li>
+      <li><strong>Fast + slow windows</strong> — a 5-bar mean reacts quickly but jitters; a 20-bar mean is smooth but late (the span dial from Vocab+). Don't choose — build both, let the model (or CV) weigh them.</li>
+      <li><strong>The lock, uniformly applied:</strong> every feature ends in <code class="ic">shift(1)</code> unless it's built purely from strictly-past values. The window ends AT the row, so "as of now" includes now.</li>
+      <li><strong>Smooth features, never the target.</strong> Smoothing y changes the question (you'd be predicting an average of several futures — some further ahead than others = leakage through the back door). Noise reduction belongs on the X side only.</li>
+    </ul>
+    <div class="quiz" data-qid="q8-4">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">Why does the 20-bar rolling mean of returns predict better than the single latest return?</p>
+      <div class="q-opts">
+        <button class="q-opt">It doesn't — fresher data is always better</button>
+        <button class="q-opt" data-ok>One bar is mostly noise; averaging 20 shrinks the noise by √20 while the signal survives — the feature has ~4.5× the signal-to-noise</button>
+        <button class="q-opt">rolling() also removes outliers automatically</button>
+      </div>
+      <p class="q-expl">Signal-to-noise, not freshness, is what a model feeds on. The cost of averaging is lag (slow to react) — which is why you also keep a fast window and let the model balance them.</p>
+    </div>
+    <div class="quiz" data-qid="q8-5">
+      <div class="q-tag">Quiz</div>
+      <p class="q-text">To reduce noise you also smooth the TARGET: y = next-day vol, 5-day rolling mean. What went wrong?</p>
+      <div class="q-opts">
+        <button class="q-opt">Nothing — smoother targets are easier to fit, so it's a free win</button>
+        <button class="q-opt">The model will underfit because y has less variance</button>
+        <button class="q-opt" data-ok>You changed the question AND leaked: a smoothed "tomorrow" is an average of several future days — days beyond tomorrow are now inside your target</button>
+      </div>
+      <p class="q-expl">Scores will look amazing and mean nothing. Noise reduction is an X-side tool. If the target is genuinely too noisy to predict, say that — it's a finding — don't quietly redefine it.</p>
+    </div>
+
+    <div class="ex" data-exid="ex8-4" data-extitle="F1 The feature block, leakage-safe">
+      <div class="ex-head"><span class="ex-tag">Exercise F1</span><span class="ex-title">The feature block, leakage-safe</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">From <code class="ic">bars</code> (ts, stock, close, ret, vol20): build four features per stock — <code class="ic">vol_lag1</code>, <code class="ic">ret_fast</code> (5-bar mean), <code class="ic">ret_slow</code> (20-bar mean), <code class="ic">volu_z</code> (per-stock z-score of volume, lagged). Every one must be legal at prediction time — say the lock out loud as you type each line.</p>
+      <textarea class="ex-code" placeholder="g = bars.groupby(...)&#10;# lag&#10;# fast window&#10;# slow window&#10;# z-score, lagged" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Single verbs (shift) direct on the groupby; chains (rolling) wrapped in transform(lambda); the z-score is two transforms then a shift.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">g = bars.groupby("stock", observed=True); vol_lag1 = g["vol20"].shift(1); ret_fast = g["ret"].transform(lambda s: s.rolling(5).mean().shift(1)); ret_slow = same with 20; volu_z = ((bars["volume"] − g["volume"].transform("mean")) / g["volume"].transform("std")) then g-shift(1) the result.</div></details></div></details>
+    </div>
+  </div>
+
+  <div class="topic">
     <div class="eyebrow">Block 5 · Model</div>
     <h3>Baseline first, model second, time-aware always</h3>
     <pre class="code">from sklearn.pipeline import Pipeline
@@ -1249,6 +1300,20 @@ print(f"model MAE {scores.mean():.4f}  vs  persistence {persist_mae:.4f}")</pre>
 
   <div class="topic">
     <div class="eyebrow">Block 6 · Interval</div>
+    <h3>What a confidence interval actually is</h3>
+    <p>Your vol estimate — say 0.36 — came from <strong>one run of history</strong>. If June could be rerun, the market would wiggle differently and you'd get 0.34, or 0.39. The CI answers one question: <em>"how much would my number wobble across plausible reruns of history?"</em> Reporting a bare 0.36 silently claims the wobble is zero — a claim you don't believe.</p>
+    <p><strong>The bootstrap is a machine for manufacturing reruns.</strong> We can't rerun June — but we can resample our own data <em>with replacement</em> to build fake Junes that share its character. Each fake June gets its own std; collect 2000 of them; the middle 95% of that pile IS the interval. No formula, no distribution assumption — the data speaks for itself.</p>
+    <div class="anim" data-anim="bootstrap">
+      <div class="anim-head"><span class="a-title">The bootstrap machine — 8 reruns of history</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">Why WITH replacement: sampling without replacement just reorders — every fake June would contain identical data. Replacement lets some days count double and others vanish: "it could have gone a bit differently." Real code runs 2000 reruns and trims 2.5% off each end; 8 is enough to see the machine.</div>
+    </div>
+    <p><strong>Why the plain version lies about markets.</strong> Volatility clusters — calm weeks, wild weeks. Point-by-point resampling <em>destroys the weeks</em>: every fake June becomes a uniform medium blend, so all the reruns agree suspiciously well, and the interval comes out too narrow. Too narrow = overconfident = the dangerous direction. The fix is embarrassingly literal: resample whole <strong>chunks</strong> so calm and wild stretches survive intact.</p>
+    <div class="anim" data-anim="blockboot">
+      <div class="anim-head"><span class="a-title">Why BLOCK bootstrap — clusters must survive the rerun</span><button class="btn-play">▶ Play</button></div>
+      <div class="stage"></div>
+      <div class="a-note">The point-shuffle reruns all land near std ≈ 1.4 (agreeing, wrongly confident). Block reruns range 0.9–2.1 — because a rerun that happens to draw three wild weeks SHOULD look different. Honest disagreement = honest interval width.</div>
+    </div>
     <h3>The confidence-interval menu — pick one, defend it</h3>
     <p>Researched from statistical references and quant-interview write-ups. You need ONE default plus the awareness of when it breaks. The menu, cheapest first:</p>
     <pre class="code"># A · ANALYTIC (30-second answer) — SE of the mean, and the vol analogue
@@ -1275,11 +1340,20 @@ ci = (m - 2.78*se, m + 2.78*se)       # t with 4 df for 5 folds
 # E · RESIDUAL-QUANTILE prediction interval (for a NEW observation)
 resid = y_val - model.predict(X_val)  # OUT-OF-SAMPLE residuals only
 lo, hi = np.quantile(resid, [0.05, 0.95])
-pi = (pred + lo, pred + hi)           # 90% PI — much wider than a CI</pre>
+pi = (pred + lo, pred + hi)           # 90% PI — much wider than a CI
+
+# F · BAYESIAN RIDGE (the parametric flex) — uncertainty built into the model
+from sklearn.linear_model import BayesianRidge
+model = Pipeline([("scale", StandardScaler()), ("br", BayesianRidge())])
+model.fit(X_tr, y_tr)
+pred, std = model.named_steps["br"].predict(
+    model.named_steps["scale"].transform(X_te), return_std=True)
+pi = (pred - 1.96*std, pred + 1.96*std)   # per-prediction interval, "for free"</pre>
     <ul>
       <li><strong>The default script</strong> (this is the move): give A in 30 seconds — <em>"first-order, SE of a std is s/√2n"</em> — then say <em>"but returns are fat-tailed and volatility clusters, so let me verify with a block bootstrap."</em> Speed, then rigor, and you said "autocorrelation" out loud.</li>
       <li><strong>Each method's gotcha</strong> (the follow-up they'll probe): A assumes iid + normal-ish; B's iid resampling <em>destroys serial dependence</em> — plain bootstrap on clustered data gives intervals that are too narrow; C — "how did you pick block length?" (rule of thumb n^⅓–√n, check the CI is stable across choices); D — CV folds share training data, so the interval is <em>optimistic</em> (there's provably no unbiased variance estimator for k-fold CV — knowing this is a flex); E — in-sample residuals make it too narrow, and one global quantile ignores that error itself clusters.</li>
       <li><strong>CI vs PI — the classic trap.</strong> A confidence interval brackets a <em>parameter</em> (the mean, the vol). A prediction interval brackets <em>tomorrow's actual value</em> — parameter uncertainty PLUS irreducible noise, so it's much wider. When they say "how sure are you about tomorrow," they're asking for a PI.</li>
+      <li><strong>F's gotcha:</strong> BayesianRidge's intervals are <em>model-trusting</em> — they assume the linear-Gaussian story is true, so they're only as honest as the model. The defense sentence: <em>"BayesianRidge hands me per-prediction stds for free, but they inherit the model's assumptions — I'd cross-check the width against held-out residual quantiles before quoting it."</em> Reach for it as the flex; keep the bootstrap as the assumption-light default.</li>
     </ul>
     <div class="quiz" data-qid="q8-2">
       <div class="q-tag">Quiz</div>
@@ -1903,6 +1977,84 @@ BUILDERS.zscore3=stage=>bucketAnim(stage,{
   transform:true,
   rowResult:it=>'z='+it.z
 });
+
+function sampleStd(a){const m=a.reduce((s,x)=>s+x,0)/a.length;return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1))}
+
+BUILDERS.bootstrap=stage=>{
+  stage.innerHTML='';
+  const vals=[1.2,-0.8,0.4,-2.1,0.9,-0.3,1.8,-1.1,0.2,0.6];
+  stage.appendChild(el('div','tbl-cap','your ONE real sample — 10 daily returns (%) · its std = '+sampleStd(vals).toFixed(2)));
+  const src=el('div','chip-row');
+  const cells=vals.map(v=>{const c=el('span','dchip',(v>0?'+':'')+v.toFixed(1));src.appendChild(c);return c});
+  stage.appendChild(src);
+  stage.appendChild(el('div','tbl-cap','resample WITH replacement → one fake rerun of history (dupes glow, missing fade)'));
+  const fake=el('div','chip-row');fake.style.minHeight='1.8rem';stage.appendChild(fake);
+  stage.appendChild(el('div','tbl-cap','each rerun’s std — collect them; trim the extremes; what’s left = the CI'));
+  const coll=el('div','result-strip');stage.appendChild(coll);
+  const rounds=[[3,1,1,7,4,0,9,2,2,5],[0,0,6,8,3,9,4,4,1,2],[5,7,7,2,9,0,3,8,8,1],[2,4,6,6,0,1,9,9,5,3],[8,3,0,5,5,7,1,2,4,9],[1,9,2,0,7,7,8,3,6,6],[4,2,5,9,1,8,0,0,3,7],[6,5,8,4,2,3,7,1,9,0]];
+  return async()=>{
+    fake.innerHTML='';coll.innerHTML='';
+    const stds=[];
+    for(const idx of rounds){
+      fake.innerHTML='';
+      const counts={};idx.forEach(i=>counts[i]=(counts[i]||0)+1);
+      cells.forEach((c,i)=>{c.style.outline=counts[i]?'2px solid var(--accent)':'';c.style.opacity=counts[i]?'1':'.3'});
+      for(const i of idx){
+        const c=el('span','dchip',(vals[i]>0?'+':'')+vals[i].toFixed(1));
+        if(counts[i]>1)c.style.borderColor='var(--accent)';
+        fake.appendChild(c);await sleep(50);
+      }
+      const s=sampleStd(idx.map(i=>vals[i]));stds.push(s);
+      const sc=el('span','dchip','std '+s.toFixed(2));sc.style.fontWeight='700';
+      coll.appendChild(sc);
+      await sleep(380);
+    }
+    cells.forEach(c=>{c.style.outline='';c.style.opacity='1'});
+    const order=stds.map((s,i)=>[s,i]).sort((a,b)=>a[0]-b[0]);
+    [...coll.children][order[0][1]].style.opacity='.3';
+    [...coll.children][order[order.length-1][1]].style.opacity='.3';
+    const sorted=order.map(o=>o[0]);
+    const ci=el('span','dchip','CI ≈ ['+sorted[1].toFixed(2)+', '+sorted[sorted.length-2].toFixed(2)+']');
+    ci.style.cssText='border-color:var(--good);color:var(--good);font-weight:700';
+    coll.appendChild(ci);
+  };
+};
+
+BUILDERS.blockboot=stage=>{
+  stage.innerHTML='';
+  const calm1=[0.2,-0.3,0.1,-0.2,0.3],wild1=[2.1,-1.8,2.4,-2.6,1.9];
+  const calm2=[0.3,-0.1,0.2,-0.3,0.1],wild2=[1.7,-2.3,2.0,-1.6,2.5];
+  const vals=[].concat(calm1,wild1,calm2,wild2);
+  const regime=i=>Math.floor(i/5)%2;
+  const paint=(c,i)=>{c.style.borderColor=regime(i)?'var(--bad)':'var(--teal)';c.style.color=regime(i)?'var(--bad)':'var(--teal)'};
+  stage.appendChild(el('div','tbl-cap','reality: calm weeks (teal) and wild weeks (red) — volatility CLUSTERS'));
+  const src=el('div','chip-row');
+  vals.forEach((v,i)=>{const c=el('span','dchip',(v>0?'+':'')+v.toFixed(1));paint(c,i);src.appendChild(c)});
+  stage.appendChild(src);
+  stage.appendChild(el('div','tbl-cap','POINT-shuffle rerun: regimes blend → every rerun looks "medium" → reruns agree too much'));
+  const row1=el('div','chip-row');row1.style.minHeight='1.8rem';stage.appendChild(row1);
+  stage.appendChild(el('div','tbl-cap','BLOCK rerun: whole weeks survive → reruns genuinely differ (this one drew 3 wild weeks)'));
+  const row2=el('div','chip-row');row2.style.minHeight='1.8rem';stage.appendChild(row2);
+  const strip=el('div','result-strip');stage.appendChild(strip);
+  const iidPick=[0,5,10,15,2,7,12,17,4,9,14,19,1,6,11,16,3,8,13,18];
+  const blockPick=[5,6,7,8,9,15,16,17,18,19,0,1,2,3,4,5,6,7,8,9];
+  const iidRerunStds=[1.42,1.39,1.44];
+  const blockRerunStds=[1.94,0.86,2.10];
+  return async()=>{
+    row1.innerHTML='';row2.innerHTML='';strip.innerHTML='';
+    for(const i of iidPick){const c=el('span','dchip',(vals[i]>0?'+':'')+vals[i].toFixed(1));paint(c,i);row1.appendChild(c);await sleep(35)}
+    const s1=el('span','dchip','rerun stds: '+iidRerunStds.map(s=>s.toFixed(2)).join(' · ')+'  → TIGHT');
+    s1.style.fontWeight='700';strip.appendChild(s1);
+    await sleep(600);
+    for(const i of blockPick){const c=el('span','dchip',(vals[i]>0?'+':'')+vals[i].toFixed(1));paint(c,i);row2.appendChild(c);await sleep(35)}
+    const s2=el('span','dchip','rerun stds: '+blockRerunStds.map(s=>s.toFixed(2)).join(' · ')+'  → WIDE');
+    s2.style.fontWeight='700';strip.appendChild(s2);
+    await sleep(500);
+    const v1=el('span','dchip','iid CI: narrow ⚠ overconfident');v1.style.cssText='border-color:var(--bad);color:var(--bad);font-weight:700';
+    const v2=el('span','dchip','block CI: wider ✓ honest');v2.style.cssText='border-color:var(--good);color:var(--good);font-weight:700';
+    strip.append(v1,v2);
+  };
+};
 
 /* ── flashcards ── */
 $$('.fc').forEach(c=>{
