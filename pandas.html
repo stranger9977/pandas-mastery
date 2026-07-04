@@ -808,6 +808,14 @@ taq["bid"].isna().mean()                         # audit: % refused as stale</pr
   <div class="topic">
     <div class="eyebrow">Type it yourself</div>
     <h3>Level 4 exercises — the boss fight</h3>
+    <div class="card">
+      <div class="tbl-cap">Your tables (ts parsed; stock/symbol category)</div>
+      <pre class="code">prices (parquet) : ts, stock, price, volume            # 4.1 input
+bars             : ts, stock, open, high, low, close, volume
+                   # your 4.1 output — reset_index() it first so
+                   # stock and ts are ordinary columns again
+trades / quotes  : same as Level 3                      # 4.3</pre>
+    </div>
 
     <div class="ex" data-exid="ex4-1" data-extitle="L4.1 Lean ingest + 15-min bars">
       <div class="ex-head"><span class="ex-tag">Exercise 4.1</span><span class="ex-title">Lean ingest + 15-min bars</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
@@ -818,9 +826,9 @@ taq["bid"].isna().mean()                         # audit: % refused as stale</pr
 
     <div class="ex" data-exid="ex4-2" data-extitle="L4.2 Leakage-safe vol feature">
       <div class="ex-head"><span class="ex-tag">Exercise 4.2</span><span class="ex-title">Leakage-safe vol feature</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
-      <p class="ex-prompt">On those bars: per-stock log returns, a 20-bar rolling std, then make it a feature usable at prediction time. All per-group, no loops — and name the leakage lock you applied.</p>
+      <p class="ex-prompt">Start from your 4.1 <code class="ic">bars</code> — first <code class="ic">reset_index()</code> so stock and ts are ordinary columns (multi-key aggs leave their keys in the index). Then: per-stock log returns, a 20-bar rolling std, and make it a feature usable at prediction time. All per-group, no loops — and name the leakage lock.</p>
       <textarea class="ex-code" placeholder="# log returns per stock&#10;# rolling std per stock&#10;# the lock&#10;" spellcheck="false"></textarea>
-      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Log of close, diff per group, rolling std per group — then the leakage lock.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">ret = np.log(close).groupby(level="stock").diff() (or transform); vol = per-group rolling(20).std(); feature = vol.groupby(level="stock").shift(1). The lock is shift — window ends AT the row.</div></details></div></details>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Log of close, diff per group, rolling std per group — then the leakage lock.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">bars = bars.reset_index().sort_values(["stock","ts"]); ret = groupby("stock")["close"].transform(lambda s: np.log(s).diff()); vol20 = groupby("stock")["ret"].transform(lambda s: s.rolling(20).std()); feat = groupby("stock")["vol20"].shift(1). The lock is shift — the window ends AT the row, so today’s feature may only know yesterday.</div></details></div></details>
     </div>
 
     <div class="ex" data-exid="ex4-3" data-extitle="L4.3 Audited asof join">
