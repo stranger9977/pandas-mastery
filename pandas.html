@@ -956,6 +956,84 @@ weather    : obs_time, city, rain_mm</pre>
 
     <div class="note"><strong>Daily protocol:</strong> clear yesterday's answers (retype, don't reread), run the Gauntlet, export, get graded. When Drills 6–8 come out identical-in-shape three days running, on/by is yours forever — same test for 11–12 and the agg shape.</div>
   </div>
+
+  <hr class="hr">
+  <div class="topic">
+    <div class="eyebrow">Gauntlet v2 · Script-mode round</div>
+    <h3>The mock-day muscles</h3>
+    <p>Round two assumes the real format: a <strong>script</strong>, not a notebook — nothing exists unless you <code class="ic">print()</code> it, plots must be <code class="ic">savefig</code>'d, and the details are <em>varied on purpose</em> so a memorized v1 answer fails where a derived one succeeds. New tables in play: <code class="ic">daily: stock, day, vol</code> and <code class="ic">reports: ts, team, status</code>.</p>
+
+    <div class="ex" data-exid="ex5-13" data-extitle="V2-1 Script reflexes">
+      <div class="ex-head"><span class="ex-tag">Drill 13</span><span class="ex-title">Script reflexes</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">These three notebook lines do nothing useful in a script — rewrite each so it does: (a) <code class="ic">df.head()</code> (b) <code class="ic">taq["bid"].isna().mean()</code> (c) <code class="ic">summary["vol"].plot.bar()</code>.</p>
+      <textarea class="ex-code" placeholder="# (a)&#10;# (b) label the number in the print&#10;# (c)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Scripts only speak when spoken to — wrap values, label them, and send plots to disk.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">print(df.head()); print(f"unmatched: {taq['bid'].isna().mean():.1%}"); summary["vol"].plot.bar(); plt.savefig("plots/vol.png")</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-14" data-extitle="V2-2 Audited ingest">
+      <div class="ex-head"><span class="ex-tag">Drill 14</span><span class="ex-title">Audited ingest</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Read <code class="ic">prices.csv</code> (string ts!), sort properly, drop exact duplicates — and <strong>print how many rows each cleaning step removed</strong>. The audit sentences are the drill.</p>
+      <textarea class="ex-code" placeholder="# read (parse!), n0 = len&#10;# sort&#10;# dedupe, print n0 - len&#10;" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Capture len() before and after each step; every drop gets a printed count and a reason.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">p = pd.read_csv("prices.csv", parse_dates=["ts"]); n0=len(p); p = p.sort_values(["ticker","ts"]); p = p.drop_duplicates(); print(f"dropped {n0-len(p)} dup rows")</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-15" data-extitle="V2-3 Derive the threshold">
+      <div class="ex-head"><span class="ex-tag">Drill 15</span><span class="ex-title">Derive the threshold</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">You compute per-group log returns and <code class="ic">ret.abs().nlargest(8)</code> prints: <code class="ic">2.31, 2.30, 2.29, 2.28, 0.011, 0.010, 0.009, 0.009</code>. (a) What kind of error produces |log ret| ≈ 2.3? (b) Pick and defend a threshold. (c) Write the null-then-recompute sequence. Note this is NOT mock1's 0.69/0.1 — derive, don't recall.</p>
+      <textarea class="ex-code" placeholder="# (a) the error type&#10;# (b) threshold + why&#10;# (c) flag, null price, RECOMPUTE ret" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">e^2.3 ≈ 10. The method: name the two populations, put the cutoff in the empty gap between them.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">(a) ×10/÷10 decimal-shift fat fingers (log 10 = 2.30). (b) anywhere in the gulf between 0.011 and 2.28 — e.g. 0.5: 50× the real data, 4× under the errors. (c) bad = ret.abs() &gt; 0.5; prices.loc[bad,"price"] = np.nan; re-run logp and ret lines (state doesn't ripple!).</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-16" data-extitle="V2-4 Find the missing chunks">
+      <div class="ex-head"><span class="ex-tag">Drill 16</span><span class="ex-title">Find the missing chunks</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Missing data isn't always NaN — sometimes the rows are simply <strong>absent</strong> (a dead feed). Write the check that catches it: rows per (ticker, day), and how you'd spot the anomalies in its output. Then say in a comment why <code class="ic">isna().sum()</code> would report nothing.</p>
+      <textarea class="ex-code" placeholder="# counts per ticker-day&#10;# how to eyeball the low ones&#10;# why isna misses this" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Two-key groupby with your normalize lane, then .size() — sort it or unstack it and look for numbers below the usual bars-per-day.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">cnt = prices.groupby(["ticker", prices["ts"].dt.normalize()]).size(); print(cnt.sort_values().head(8)). Absent rows can't be NaN — there's no row to be null; only the COUNT betrays them.</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-17" data-extitle="V2-5 Daily vol, annualized, cold">
+      <div class="ex-head"><span class="ex-tag">Drill 17</span><span class="ex-title">Daily vol, annualized, cold</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">From cleaned <code class="ic">prices</code> (ts, ticker, price): per-ticker-per-day log returns → the <code class="ic">daily</code> vol table, annualized for 1-minute bars — then the per-ticker mean, printed with a label. Every line from memory; you did this Friday.</p>
+      <textarea class="ex-code" placeholder="# logp, ret (within ticker-day!)&#10;# daily = two-key groupby → agg → reset&#10;# annualize&#10;# per-ticker mean, printed" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">√(bars-per-day × 252). And remember why the diff groups by day too.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">logp=np.log(p.price); ret = p.groupby(["ticker", p.ts.dt.normalize()])["logp"].diff(); daily = p.groupby([...]).agg(vol=("ret","std")).reset_index(); daily["vol"] *= np.sqrt(390*252); print(daily.groupby("ticker")["vol"].mean())</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-18" data-extitle="V2-6 Bootstrap, cold">
+      <div class="ex-head"><span class="ex-tag">Drill 18</span><span class="ex-title">Bootstrap, cold</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">95% CI on the mean vol of one ticker's daily series <code class="ic">v</code>: the four bootstrap lines plus a labeled print. Then one comment: the caveat you'd volunteer about iid resampling here.</p>
+      <textarea class="ex-code" placeholder="# resample-with-replacement 2000x&#10;# percentiles&#10;# labeled print&#10;# the caveat" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">List comprehension of v.sample(len(v), replace=True).mean(); np.percentile([2.5, 97.5]). The caveat is one word long and it clusters.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">boots=[v.sample(len(v),replace=True).mean() for _ in range(2000)]; lo,hi=np.percentile(boots,[2.5,97.5]); print(f"vol {v.mean():.3f} 95% CI [{lo:.3f},{hi:.3f}]") # vol autocorrelates → iid CI slightly narrow; block bootstrap with more time.</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-19" data-extitle="V2-7 The exact merge, defended">
+      <div class="ex-head"><span class="ex-tag">Drill 19</span><span class="ex-title">The exact merge, defended</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Attach <code class="ic">info</code> (ticker, sector) to <code class="ic">daily</code> keeping every daily row, with the two safety args and a printed audit of match rates. One ticker is missing from info — what should your printout reveal, and what do you say about it?</p>
+      <textarea class="ex-code" placeholder="# merge with the two safety args&#10;# audit print&#10;# the sentence" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">how="left" so nothing vanishes; validate= the relationship; indicator=True then value_counts the _merge column.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">full = daily.merge(info, on="ticker", how="left", validate="m:1", indicator=True); print(full["_merge"].value_counts()) — left_only rows = the missing ticker; "X has no reference row — NaN sector, flagged, not dropped."</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-20" data-extitle="V2-8 asof at the daily grain">
+      <div class="ex-head"><span class="ex-tag">Drill 20</span><span class="ex-title">asof at the daily grain</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">New disguise: <code class="ic">daily</code> has one row per (team, day); <code class="ic">reports</code> (ts, team, status) is a sparse unsorted event feed. Attach the most recent report at-or-before <strong>each day's morning</strong>. Careful: the two time keys have different names AND different types (day vs timestamp) — handle that first.</p>
+      <textarea class="ex-code" placeholder="# make the grains match&#10;# sorts&#10;# the call" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">merge_asof compares the two time columns directly, so both must be datetimes at the moment you mean — "as of that morning" is day + a time. Then it's left_on/right_on + by.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">daily["asof_ts"] = daily["day"] + pd.Timedelta("9h"); both sorted by their time key; pd.merge_asof(daily, reports.sort_values("ts"), left_on="asof_ts", right_on="ts", by="team", direction="backward")</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-21" data-extitle="V2-9 The model block, condensed">
+      <div class="ex-head"><span class="ex-tag">Drill 21</span><span class="ex-title">The model block, condensed</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">On <code class="ic">daily</code> (ticker, day, vol, rating): target = next-day vol; features = vol_lag1 and rating; persistence baseline MAE; scaled Ridge with 5-fold time-aware CV; print both MAEs with labels. Include the per-ticker discipline on the shifts.</p>
+      <textarea class="ex-code" placeholder="# y and lag per ticker&#10;# mask&#10;# baseline MAE&#10;# pipeline + tscv + print" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">g = groupby("ticker")["vol"]: y = g.shift(-1), lag = g.shift(1). Baselines before model. Which CV splitter and why — say it in a comment.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">g=daily.groupby("ticker")["vol"]; daily["y"]=g.shift(-1); daily["vol_lag1"]=g.shift(1); ok=daily[["y","vol_lag1","rating"]].notna().all(axis=1); X,y=daily.loc[ok,["vol_lag1","rating"]],daily.loc[ok,"y"]; print("persist:",(y-X["vol_lag1"]).abs().mean()); m=Pipeline([("s",StandardScaler()),("r",Ridge())]); print("model:",-cross_val_score(m,X,y,cv=TimeSeriesSplit(5),scoring="neg_mean_absolute_error").mean())</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-22" data-extitle="V2-10 The close, in print()">
+      <div class="ex-head"><span class="ex-tag">Drill 22</span><span class="ex-title">The close, in print()</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Write the final REPORT block of a script, as actual <code class="ic">print()</code> calls: headline estimate + CI, traps found with counts, baseline verdict, two "with more time" items as comments. This is the last thing the interviewer sees and the file freezes when time's up — make it the best cell in the program.</p>
+      <textarea class="ex-code" placeholder="print(&quot;=== REPORT ===&quot;)&#10;..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Four labeled prints + two comments. Honest numbers, honest verdict, named next steps.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">print(f"HEADLINE {tick}: vol {v:.3f} 95% CI [{lo:.3f},{hi:.3f}]"); print(f"DATA: {n_ff} fat-fingers nulled, {n_dup} dups dropped, dead-feed days flagged"); print(f"MODEL MAE {mm:.4f} vs persistence {mp:.4f} -> {'beats' if mm&lt;mp else 'does not beat'} baseline"); # with more time: block bootstrap; expanding-mean baseline</div></details></div></details>
+    </div>
+    <div class="note"><strong>Tonight's order:</strong> rerun Levels 3–4 exercises → this v2 round → export for grading → break → mock3, solo, 60 minutes, script mode. Then stop.</div>
+  </div>
 </section>
 
 <!-- ═══════════════════════ TOOLKIT · VOCAB ═══════════════════════ -->
