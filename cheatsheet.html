@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>The Cheat Sheet</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --line:#30363d; --ink:#e6edf3; --dim:#8b949e;
+    --acc:#58a6ff; --gold:#e3b341; --grn:#3fb950; --red:#f85149; --code-bg:#0a0e14;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f8fa; --panel:#ffffff; --line:#d0d7de; --ink:#1f2328; --dim:#57606a;
+           --acc:#0969da; --gold:#9a6700; --grn:#1a7f37; --red:#cf222e; --code-bg:#f0f3f6; }
+  }
+  *{box-sizing:border-box; margin:0}
+  body{background:var(--bg); color:var(--ink);
+       font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       padding:14px; max-width:880px; margin:0 auto;}
+  h1{font-size:1.35rem; margin:.2rem 0 .1rem}
+  .sub{color:var(--dim); font-size:.85rem; margin-bottom:14px}
+  h2{font-size:1.02rem; margin:0 0 8px; display:flex; align-items:center; gap:8px}
+  h2 .n{background:var(--acc); color:var(--bg); border-radius:6px; min-width:24px; height:24px;
+        display:inline-flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700}
+  section{background:var(--panel); border:1px solid var(--line); border-radius:10px;
+          padding:14px; margin-bottom:12px}
+  pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px;
+      padding:10px 12px; overflow-x:auto; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+      margin:8px 0; -webkit-text-size-adjust:100%}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.9em;
+       background:var(--code-bg); padding:1px 5px; border-radius:4px}
+  pre code{background:none; padding:0}
+  .c{color:var(--dim)}         /* comment */
+  .k{color:var(--gold)}        /* keyword-ish highlight */
+  .g{color:var(--grn)}
+  .r{color:var(--red)}
+  table{border-collapse:collapse; width:100%; font-size:.88rem; margin:8px 0}
+  th,td{border:1px solid var(--line); padding:5px 9px; text-align:left; vertical-align:top}
+  th{background:var(--code-bg)}
+  td code{white-space:nowrap}
+  .say{border-left:3px solid var(--grn); padding:6px 10px; margin:8px 0; font-size:.92rem;
+       background:var(--code-bg); border-radius:0 6px 6px 0}
+  .say b{color:var(--grn)}
+  .warn{border-left:3px solid var(--red); padding:6px 10px; margin:8px 0; font-size:.92rem;
+        background:var(--code-bg); border-radius:0 6px 6px 0}
+  .warn b{color:var(--red)}
+  ul{padding-left:20px} li{margin:3px 0}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .pill{display:inline-block; background:var(--code-bg); border:1px solid var(--line);
+        border-radius:99px; padding:1px 10px; font-size:.8rem; color:var(--dim); margin:2px 2px 2px 0}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+
+<h1>🐼 The Cheat Sheet</h1>
+<p class="sub">One scroll. The recipe → the numbers → the sentences. Everything else is nerves.</p>
+
+<!-- ══════════════════ 1 THE RECIPE ══════════════════ -->
+<section>
+<h2><span class="n">1</span>THE RECIPE — end to end, one verb per line</h2>
+<pre><code><span class="c"># ── 0 IMPORTS (pandas trio now; sklearn later, when Block 5 needs it) ──</span>
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+<span class="c"># ── 1 LOOK ──</span>
+prices = pd.read_csv("data/prices.csv", parse_dates=["ts"])
+print(prices.head())
+print(prices.info())
+
+<span class="c"># ── 2 ORDER (windows want within-lane order) ──</span>
+prices = prices.sort_values(["ticker", "ts"])
+
+<span class="c"># ── 3 CLEAN DUPS (count what you drop) ──</span>
+n0 = len(prices)
+prices = prices.drop_duplicates()
+print("dup rows dropped:", n0 - len(prices))
+
+<span class="c"># ── 4 RETURNS — three real columns ──</span>
+prices["logp"] = np.log(prices["price"])
+prices["day"]  = prices["ts"].dt.normalize()
+prices["ret"]  = prices.groupby(["ticker", "day"])["logp"].diff()
+
+<span class="c"># ── 5 SPIKE CYCLE ──</span>
+print(prices["ret"].abs().nlargest(8))     <span class="c"># look at the top</span>
+<span class="c"># np.exp(top value) → the multiplier: 0.69→x2, 2.30→x10 = fat finger</span>
+bad = prices["ret"].abs() &gt; 0.5            <span class="c"># threshold IN THE GAP you saw</span>
+print("spikes nulled:", bad.sum())
+prices.loc[bad, "price"] = np.nan          <span class="c"># .loc to WRITE</span>
+<span class="c"># !! RE-RUN the three lines from Block 4 — ret is stale until you do</span>
+prices["logp"] = np.log(prices["price"])
+prices["ret"]  = prices.groupby(["ticker", "day"])["logp"].diff()
+print("max |ret| now:", prices["ret"].abs().max())   <span class="c"># confirm the clean</span>
+
+<span class="c"># ── 6 PLOT SLOT 1 — prove the clean ──</span>
+wide = prices.pivot_table(index="ts", columns="ticker", values="price")
+wide.plot(subplots=True, figsize=(10, 8))
+plt.savefig("plots/prices_clean.png")      <span class="c"># script mode: SAVE it</span>
+
+<span class="c"># ── 7 RECTANGLE — one row per (ticker, day) ──</span>
+daily = prices.groupby(["ticker", "day"]).agg(vol=("ret", "std"))
+daily = daily.reset_index()
+daily["vol"] = daily["vol"] * np.sqrt(390 * 252)     <span class="c"># annualize</span>
+
+<span class="c"># ── 8 HEADLINE ──</span>
+print(daily.groupby("ticker")["vol"].mean().sort_values())
+
+<span class="c"># ── 9 INTERVAL — rerun history 2000x, keep the middle 95 ──</span>
+v = daily.loc[daily["ticker"] == "QRT", "vol"]
+boots = [v.sample(len(v), replace=True).mean() for _ in range(2000)]
+lo, hi = np.percentile(boots, [2.5, 97.5])
+print(f"QRT ann. vol {v.mean():.3f}, 95% CI [{lo:.3f}, {hi:.3f}]")</code></pre>
+</section>
+
+<!-- ══════════════════ 2 MERGES ══════════════════ -->
+<section>
+<h2><span class="n">2</span>The two merges</h2>
+<pre><code><span class="c"># EXACT — attach reference data; validate + audit</span>
+daily = daily.merge(info, on="ticker", how="left",
+                    validate="m:1", indicator=True)
+print(daily["_merge"].value_counts())      <span class="c"># NaN sector = a FINDING, say it</span>
+
+<span class="c"># INEXACT — most recent rating as of each morning</span>
+ratings = ratings.sort_values("ts")                    <span class="c"># asof: sort by ON key</span>
+ratings = ratings.drop_duplicates(["ticker","ts"], keep="last")  <span class="c"># dedupe RIGHT side</span>
+daily["asof_ts"] = daily["day"] + pd.Timedelta("9h")   <span class="c"># align the grain</span>
+daily = daily.sort_values("asof_ts")
+daily = pd.merge_asof(daily, ratings,
+                      left_on="asof_ts", right_on="ts",
+                      by="ticker",
+                      direction="backward",
+                      tolerance=pd.Timedelta("30D"))   <span class="c"># justify from the data's gaps</span></code></pre>
+<div class="say"><b>Mnemonic:</b> <code>on</code> is the <b>timeline I walk</b>, <code>by</code> is the <b>lane I stay in</b>.</div>
+<div class="warn"><b>Sort trap:</b> windows want <code>["ticker","ts"]</code>; <code>merge_asof</code> wants the ON key <b>globally</b> sorted — re-sort by time right before the asof, both sides.</div>
+</section>
+
+<!-- ══════════════════ 3 MODEL ══════════════════ -->
+<section>
+<h2><span class="n">3</span>Model block (only if asked)</h2>
+<pre><code>from sklearn.pipeline import Pipeline                <span class="c"># the wrapper</span>
+from sklearn.preprocessing import StandardScaler     <span class="c"># scaling = preprocessing</span>
+from sklearn.linear_model import Ridge               <span class="c"># the model = a linear model</span>
+from sklearn.dummy import DummyRegressor             <span class="c"># the baseline = a dummy</span>
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+
+daily = daily.sort_values(["ticker", "day"])
+daily["vol_lag1"] = daily.groupby("ticker")["vol"].shift(1)   <span class="c"># yesterday, per lane</span>
+daily["y"]        = daily.groupby("ticker")["vol"].shift(-1)  <span class="c"># tomorrow = target</span>
+m = daily.dropna(subset=["vol_lag1", "rating", "y"])
+X, y = m[["vol_lag1", "rating"]], m["y"]
+
+model = Pipeline([("scale", StandardScaler()), ("ridge", Ridge())])
+base  = DummyRegressor(strategy="mean")
+cv    = TimeSeriesSplit(n_splits=5)
+print("model MAE:", -cross_val_score(model, X, y, cv=cv,
+                     scoring="neg_mean_absolute_error").mean())
+print("base  MAE:", -cross_val_score(base,  X, y, cv=cv,
+                     scoring="neg_mean_absolute_error").mean())
+<span class="c"># persistence baseline: MAE of |vol_lag1 - y| — the one to beat</span>
+print("persist MAE:", (m["vol_lag1"] - m["y"]).abs().mean())</code></pre>
+<div class="say"><b>Honest sentence:</b> "The model {beats / roughly matches} persistence — with this little data I'd trust the baseline until the gap is clearly outside the noise."</div>
+</section>
+
+<!-- ══════════════════ 4 NUMBERS ══════════════════ -->
+<section>
+<h2><span class="n">4</span>Numbers to know cold</h2>
+<div class="grid">
+<div>
+<table>
+<tr><th colspan="2">Annualize: × √(periods per year)</th></tr>
+<tr><td>1-min bars</td><td><code>√(390·252)</code> ≈ <b>313.5</b></td></tr>
+<tr><td>daily</td><td><code>√252</code> ≈ <b>15.87</b></td></tr>
+<tr><td>daily → month</td><td><code>√21</code> ≈ <b>4.58</b></td></tr>
+<tr><td>why √</td><td>variances add ⇒ std scales √N</td></tr>
+</table>
+</div>
+<div>
+<table>
+<tr><th colspan="2">np.exp dictionary (|log ret| → move)</th></tr>
+<tr><td><b>0.69</b></td><td>×2 or ÷2 (decimal? split? bad print)</td></tr>
+<tr><td><b>2.30</b></td><td>×10 or ÷10 (decimal-shift fat finger)</td></tr>
+<tr><td><b>4.61</b></td><td>×100 or ÷100</td></tr>
+<tr><td>real minute</td><td>~0.001; even a crash day &lt; 0.2</td></tr>
+</table>
+</div>
+</div>
+<div class="say"><b>Fat finger vs real move:</b> a bad print <b>reverts next tick</b>; a real shock <b>persists</b>. Glance at prices around the spike before nulling — say this out loud, it's a differentiator.</div>
+</section>
+
+<!-- ══════════════════ 5 DEFENSES ══════════════════ -->
+<section>
+<h2><span class="n">5</span>Defense one-liners (say these when asked "why?")</h2>
+<table>
+<tr><th>Why…</th><th>The sentence</th></tr>
+<tr><td>log price?</td><td>"Log returns are additive across time and symmetric up/down — <code>diff()</code> of log price gives me returns in one vectorized line, and at minute scale they're ≈ percent moves anyway."</td></tr>
+<tr><td>sort first?</td><td>"<code>diff()</code> and rolling windows trust row order — sorting <code>["ticker","ts"]</code> makes each lane chronological so 'previous row' means 'previous minute of the same name'."</td></tr>
+<tr><td>groupby before diff?</td><td>"So the first minute of each ticker/day diffs against nothing instead of another ticker's close — the overnight gap and cross-ticker seams become honest NaNs."</td></tr>
+<tr><td>that threshold?</td><td>"I looked at the tail: real returns top out near X, the bad prints sit at Y — I cut in the gap between them, not at a magic number."</td></tr>
+<tr><td>null, not drop?</td><td>"Nulling keeps the row's timestamp in place so the grid stays intact; the NaN propagates into the two returns that touched it, which is exactly the poison I want removed."</td></tr>
+<tr><td>bootstrap?</td><td>"Rerun history 2000 times, keep the middle 95. It's distribution-free — no normality assumption on vol, which is skewed."</td></tr>
+<tr><td>block bootstrap? (if pushed)</td><td>"Vol clusters day-to-day, so iid resampling understates the width — I'd resample contiguous blocks of days to preserve the autocorrelation."</td></tr>
+<tr><td>tolerance=30D?</td><td>"Ratings arrive roughly every 4 days; 30 days is generous but past that a rating is stale — I'd rather have an honest NaN than a zombie rating."</td></tr>
+<tr><td>dedupe quotes/ratings?</td><td>"Duplicate timestamps make 'most recent' ambiguous — <code>keep=\"last\"</code> makes merge_asof's silent last-wins choice explicit."</td></tr>
+<tr><td>no separate holdout?</td><td>"TimeSeriesSplit IS the holdout here — every fold tests on data after its training window. I'd only add a final untouched slice if I were tuning/selecting, since the winner's CV score runs optimistic."</td></tr>
+<tr><td>Ridge?</td><td>"Two noisy correlated features, tiny data — a little shrinkage beats OLS variance. Scale first so the penalty treats both features fairly."</td></tr>
+<tr><td>CI vs PI?</td><td>"CI is uncertainty about the <i>average</i>; a prediction interval for <i>tomorrow's value</i> is much wider — it adds the day-to-day noise back in."</td></tr>
+</table>
+</section>
+
+<!-- ══════════════════ 6 SYNTAX ══════════════════ -->
+<section>
+<h2><span class="n">6</span>Your gremlin watchlist</h2>
+<ul>
+  <li><b>Named agg shape:</b> <code>vol=("ret","std")</code> — <i>equals, paren, quote-comma-quote</i>. No colons, no braces inside <code>.agg()</code>. Colons live in dicts <code>{}</code> only.</li>
+  <li><b>Methods return new:</b> <code>df = df.sort_values(...)</code>, <code>df = df.reset_index()</code> — always reassign.</li>
+  <li><b>Write with .loc:</b> read <code>df[mask]</code>, write <code>df.loc[mask, "col"] = ...</code> (chained <code>df[mask]["col"]=</code> writes to a copy that evaporates).</li>
+  <li><b>Recompute downstream:</b> cells hold values, not formulas — after nulling prices, re-run <code>logp</code> and <code>ret</code>.</li>
+  <li><b>transform takes a string:</b> <code>.transform("mean")</code>, not <code>.transform.mean()</code>. agg collapses; transform broadcasts back to every row.</li>
+  <li><b>Close the tuple before the comma</b> (your finger habit on the first agg tuple).</li>
+  <li><b>Python spells it</b> <code>True</code>/<code>False</code>, capitalized.</li>
+  <li><b>head() before you code</b> — never guess column names.</li>
+  <li><b>Paths:</b> data lives in <code>data/</code> next to the script; print <code>os.getcwd()</code> if lost.</li>
+</ul>
+</section>
+
+<!-- ══════════════════ 7 SCRIPT MODE ══════════════════ -->
+<section>
+<h2><span class="n">7</span>Script mode + plots</h2>
+<ul>
+  <li>Nothing shows unless you <code>print()</code> it. Print early, print often — each run is your feedback loop.</li>
+  <li>Plots: <code>plt.savefig("plots/name.png")</code>, never rely on <code>plt.show()</code>.</li>
+  <li>Structure <code>main.py</code> with the spine as comments first: <code># 1 INGEST · 2 EDA · 3 CLEAN · 4 FEATURES · 5 MODEL · 6 INTERVAL · 7 REPORT</code> — then fill.</li>
+  <li>The code freezes at the end — the printed <b>REPORT block is the artifact</b>. End with a tidy print of: headline ± CI, traps found (with counts), baseline verdict, "with more time…".</li>
+</ul>
+<pre><code><span class="c"># quick-look plots, one line each</span>
+wide.plot(subplots=True)                              <span class="c"># the look</span>
+prices["ret"].hist(bins=100)                          <span class="c"># the distribution</span>
+prices.groupby(["ticker","day"]).size()               <span class="c"># the holes (rows per day)</span>
+daily.pivot_table(index="day", columns="ticker", values="vol").plot()  <span class="c"># vol over time</span></code></pre>
+</section>
+
+<!-- ══════════════════ 8 RECOVERY ══════════════════ -->
+<section>
+<h2><span class="n">8</span>When stuck (the Day-of moves)</h2>
+<ul>
+  <li><b>Clarify first:</b> "Before I start — what's the one number you want at the end, and can I check assumptions with you as I go?"</li>
+  <li><b>Error:</b> read the <b>last line</b> of the traceback, then isolate with <code>.head(10)</code> on the exact object.</li>
+  <li><b>Blank:</b> say <b>know / want / gap</b> out loud: "I have X, I want Y, the gap is Z" — the gap is always one recipe step.</li>
+  <li><b>Frozen:</b> "Give me ten seconds to collect the plan." Then read your spine comments.</li>
+  <li><b>Ask early:</b> "I'd normally reach for ___ here — is that the direction you want?" A hint at minute 20 beats silence at minute 50.</li>
+  <li><b>Halfway check:</b> at ~45 min, cut scope out loud: "I'll lock the headline + CI, then merges, and describe the model if time runs short."</li>
+</ul>
+<div class="say"><b>Priority stack if time collapses:</b> clean data → daily vol table → headline + CI → merges → model. A finished smaller thing beats an unfinished bigger thing.</div>
+</section>
+
+<p class="sub" style="text-align:center; margin-top:16px">
+  <a href="index.html">← full tutorial</a> &nbsp;·&nbsp; you already solved this exercise once. 🐼
+</p>
+
+</body>
+</html>
