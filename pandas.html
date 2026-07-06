@@ -861,6 +861,83 @@ weather    : obs_time, city, rain_mm</pre>
   </div>
 
   <div class="topic">
+    <div class="eyebrow">Gauntlet v3 · THE RECIPE — one verb per line</div>
+    <h3>The foolproof end-to-end</h3>
+    <p><strong>You never need to invent a combined step.</strong> Chains are cosmetic; under pressure, write one verb per line with a print between — that's how these drills work. Done in order, v3 = writing the entire exercise once. Scenario: <code class="ic">prices (ts, ticker, price)</code> minute data + <code class="ic">info (ticker, sector)</code> + <code class="ic">events (ts, ticker, rating)</code>. Plotting appears in exactly two slots: after cleaning (prove it) and in the report (answer a question).</p>
+
+    <div class="ex" data-exid="ex5-23" data-extitle="R1 Look + Order">
+      <div class="ex-head"><span class="ex-tag">Recipe 1–2</span><span class="ex-title">Look + Order</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Read prices.csv (ts is a string), print head and info, then sort. Three verbs, four lines. Say what info's non-null column is for.</p>
+      <textarea class="ex-code" placeholder="# read (parse!)&#10;# two prints&#10;# sort (catch it!)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">read_csv with parse_dates; print(head); print(info); sort_values by ticker then ts — reassigned.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">prices = pd.read_csv("data/prices.csv", parse_dates=["ts"]); print(prices.head()); print(prices.info()); prices = prices.sort_values(["ticker","ts"])</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-24" data-extitle="R3 Dups, counted">
+      <div class="ex-head"><span class="ex-tag">Recipe 3</span><span class="ex-title">Dups, counted</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Drop exact duplicates and print how many you dropped. Three lines (the count needs a before-length).</p>
+      <textarea class="ex-code" placeholder="n0 = ...&#10;..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">len before, drop_duplicates reassigned, print the difference.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">n0 = len(prices); prices = prices.drop_duplicates(); print("dups dropped:", n0 - len(prices))</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-25" data-extitle="R4 Returns — three real columns">
+      <div class="ex-head"><span class="ex-tag">Recipe 4</span><span class="ex-title">Returns — three real columns</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Make <code class="ic">logp</code>, then <code class="ic">day</code> (a REAL column — no inline tricks), then <code class="ic">ret</code> via a per-(ticker, day) diff. Three assignment lines. Say why day is in the groupby.</p>
+      <textarea class="ex-code" placeholder="prices[&quot;logp&quot;] = ...&#10;prices[&quot;day&quot;]  = ...&#10;prices[&quot;ret&quot;]  = ..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">np.log; .dt.normalize(); groupby two plain column names, select logp, diff. Day fences off the overnight gap.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">prices["logp"] = np.log(prices["price"]); prices["day"] = prices["ts"].dt.normalize(); prices["ret"] = prices.groupby(["ticker","day"])["logp"].diff()</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-26" data-extitle="R5 The spike cycle">
+      <div class="ex-head"><span class="ex-tag">Recipe 5</span><span class="ex-title">The spike cycle</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">The full loop: print the 8 biggest |ret| → np.exp the top one in your head (what error is it?) → mask in the gap → count it → null the PRICES → re-run the logp and ret lines. Six steps, six lines-ish.</p>
+      <textarea class="ex-code" placeholder="# look&#10;# mask + count&#10;# null&#10;# re-run the two lines" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">nlargest(8); bad = ret.abs() &gt; (a number in the empty gap); print bad.sum(); .loc[bad,"price"]=np.nan; then the logp/ret lines again — columns never self-update.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">print(prices["ret"].abs().nlargest(8)); bad = prices["ret"].abs() &gt; 0.5; print("bad prints:", bad.sum()); prices.loc[bad,"price"] = np.nan; prices["logp"] = np.log(prices["price"]); prices["ret"] = prices.groupby(["ticker","day"])["logp"].diff()</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-27" data-extitle="R6 Plot slot 1 — prove the clean">
+      <div class="ex-head"><span class="ex-tag">Recipe 6</span><span class="ex-title">Plot slot 1 — prove the clean</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Pivot to one column per ticker, plot subplots, save the PNG. Two-three lines. Say the sentence the plot proves.</p>
+      <textarea class="ex-code" placeholder="wide = ...&#10;# plot + save" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">pivot(index=x-axis, columns=the lines, values=drawn); .plot(subplots=True); plt.savefig. "Spikes gone, everything else untouched."<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">wide = prices.pivot(index="ts", columns="ticker", values="price"); wide.plot(subplots=True, figsize=(10,8)); plt.savefig("plots/prices_clean.png")</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-28" data-extitle="R7 The rectangle">
+      <div class="ex-head"><span class="ex-tag">Recipe 7</span><span class="ex-title">The rectangle</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Say it first: "one row per (ticker, day), holding that day's vol." Then: the agg, reset_index on ITS OWN line, annualize (390-min days), print head.</p>
+      <textarea class="ex-code" placeholder="daily = ...&#10;daily = daily.reset_index()&#10;# annualize, print" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">groupby the two plain columns → agg(vol=("ret","std")) → reset → *= np.sqrt(390*252).<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">daily = prices.groupby(["ticker","day"]).agg(vol=("ret","std")); daily = daily.reset_index(); daily["vol"] = daily["vol"] * np.sqrt(390*252); print(daily.head())</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-29" data-extitle="R8+R9 Headline + interval">
+      <div class="ex-head"><span class="ex-tag">Recipe 8–9</span><span class="ex-title">Headline + interval</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">Per-ticker mean vol (sorted, printed). Then the four bootstrap lines on the wildest ticker with a labeled f-string print.</p>
+      <textarea class="ex-code" placeholder="per_ticker = ...&#10;&#10;v = ...&#10;boots = ...&#10;lo, hi = ...&#10;print(f...)" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">groupby-mean-sort_values; v.sample(len(v), replace=True).mean() 2000×; np.percentile [2.5, 97.5].<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">per_ticker = daily.groupby("ticker")["vol"].mean(); print(per_ticker.sort_values()); v = daily.loc[daily["ticker"]=="QRT","vol"]; boots = [v.sample(len(v), replace=True).mean() for _ in range(2000)]; lo, hi = np.percentile(boots,[2.5,97.5]); print(f"vol {v.mean():.3f} 95% CI [{lo:.3f},{hi:.3f}]")</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-30" data-extitle="R10 Both merges">
+      <div class="ex-head"><span class="ex-tag">Recipe 10</span><span class="ex-title">Both merges</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">(a) Exact: attach info, keep every daily row, validated. (b) Inexact: each day gets the latest event as of 9am — make the asof timestamp a REAL column first, sort both, then the call.</p>
+      <textarea class="ex-code" placeholder="# exact&#10;&#10;# grain column, sorts, asof" spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">merge(how="left", validate="m:1"). Then daily["asof_ts"] = day + 9h; both sorted by their time keys; merge_asof with left_on/right_on + by, backward.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">daily = daily.merge(info, on="ticker", how="left", validate="m:1"); daily["asof_ts"] = daily["day"] + pd.Timedelta("9h"); daily = daily.sort_values("asof_ts"); events = events.sort_values("ts"); daily = pd.merge_asof(daily, events, left_on="asof_ts", right_on="ts", by="ticker", direction="backward")</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-31" data-extitle="R11 The model block">
+      <div class="ex-head"><span class="ex-tag">Recipe 11</span><span class="ex-title">The model block (if asked)</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">One verb per line: y (next day, per ticker), vol_lag1 (per ticker), the notna mask, X and y, persistence MAE printed, scaled Ridge + TimeSeriesSplit(5) MAE printed.</p>
+      <textarea class="ex-code" placeholder="g = ...&#10;daily[&quot;y&quot;] = ...&#10;..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">g = groupby("ticker")["vol"]; shift(-1) and shift(1); ok mask with notna().all(axis=1); baseline = (y − lag).abs().mean(); Pipeline + cross_val_score(neg MAE).<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">g = daily.groupby("ticker")["vol"]; daily["y"] = g.shift(-1); daily["vol_lag1"] = g.shift(1); ok = daily[["y","vol_lag1"]].notna().all(axis=1); X = daily.loc[ok,["vol_lag1"]]; y = daily.loc[ok,"y"]; print("persist:", (y - X["vol_lag1"]).abs().mean()); model = Pipeline([("s",StandardScaler()),("r",Ridge())]); print("model:", -cross_val_score(model, X, y, cv=TimeSeriesSplit(5), scoring="neg_mean_absolute_error").mean())</div></details></div></details>
+    </div>
+
+    <div class="ex" data-exid="ex5-32" data-extitle="R12 Report + plot slot 2">
+      <div class="ex-head"><span class="ex-tag">Recipe 12</span><span class="ex-title">Report + plot slot 2</span><label class="ex-done-w"><input type="checkbox" class="ex-done">done</label></div>
+      <p class="ex-prompt">The frozen-file close: three labeled prints (headline+CI, traps+counts, baseline verdict), the bar plot of per-ticker vol saved to PNG, and two "# with more time" comments.</p>
+      <textarea class="ex-code" placeholder="print(&quot;HEADLINE...&quot;)&#10;..." spellcheck="false"></textarea>
+      <details class="ex-hint"><summary>hint</summary><div class="hint-body">Honest numbers, honest verdict, named next steps. per_ticker.plot.bar(); savefig.<details class="ex-answer"><summary>still stuck — show the answer</summary><div class="hint-body">print(f"HEADLINE QRT vol {v.mean():.3f} CI [{lo:.3f},{hi:.3f}]"); print(f"TRAPS: {ndup} dups, {nbad} fat-fingers nulled"); print("MODEL does not beat persistence — expected for vol"); per_ticker.plot.bar(title="annualized vol"); plt.savefig("plots/vol.png") # with more time: block bootstrap; rating feature</div></details></div></details>
+    </div>
+    <div class="note"><strong>How to use v3 tonight and tomorrow morning:</strong> one pass, in order, from memory — it IS the whole exercise. Type each step, then check against the gated answer right here. The recipe never changes; the prompt only renames the statistic in Recipe 7–9. If you can walk R1→R12, there is no prompt shape that can strand you. <button class="next-btn" id="clearV3" style="margin-top:.5rem">⟲ Clear v3 answers &amp; re-drill</button></div>
+  </div>
+
+  <div class="topic">
     <div class="eyebrow">Syntax reflexes</div>
 
     <div class="ex" data-exid="ex5-1" data-extitle="G1 Dict-colon speed rep">
@@ -2215,6 +2292,21 @@ $$('[data-shuffle]').forEach(b=>b.addEventListener('click',()=>{
   });
   load();meta();
 })();
+
+/* v3 re-drill */
+const clearV3=$('#clearV3');
+if(clearV3)clearV3.addEventListener('click',()=>{
+  for(let i=23;i<=32;i++){
+    const ex=$('[data-exid="ex5-'+i+'"]');
+    if(!ex)continue;
+    $('.ex-code',ex).value='';store.set('ex.ex5-'+i+'.code','');
+    $('.ex-done',ex).checked=false;store.set('ex.ex5-'+i+'.done','0');
+    $$('details',ex).forEach(d=>d.open=false);
+  }
+  updateProgress();
+  clearV3.textContent='⟲ Cleared — go again';
+  setTimeout(()=>clearV3.innerHTML='⟲ Clear v3 answers &amp; re-drill',1500);
+});
 
 /* wire up animation cards */
 $$('.anim').forEach(a=>{
